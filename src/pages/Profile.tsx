@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, MapPin, Building, Plus, Trash } from "lucide-react";
+import { Mail, MapPin, Building, Plus, Trash, GraduationCap, School } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/AuthProvider";
@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isAddingOpportunity, setIsAddingOpportunity] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
   const userId = session?.user.id;
@@ -33,66 +32,20 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const { data: opportunities, refetch: refetchOpportunities } = useQuery({
-    queryKey: ['opportunities', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('opportunities')
-        .select('*')
-        .eq('company_id', userId);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId && profile?.role === 'company',
-  });
-
-  const { data: applications } = useQuery({
-    queryKey: ['applications', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          *,
-          profiles (*),
-          opportunities (*)
-        `)
-        .eq('opportunities.company_id', userId);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId && profile?.role === 'company',
-  });
-
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
-    company_name: profile?.company_name || '',
-    company_description: profile?.company_description || '',
-    company_website: profile?.company_website || '',
-    company_size: profile?.company_size || '',
-  });
-
-  const [newOpportunity, setNewOpportunity] = useState({
-    title: '',
-    description: '',
-    location: '',
-    type: '',
-    duration: '',
-    salary: '',
+    university: profile?.university || '',
+    career: profile?.career || '',
+    student_id: profile?.student_id || '',
+    graduation_year: profile?.graduation_year || '',
+    major: profile?.major || '',
+    gpa: profile?.gpa || '',
+    bio: profile?.bio || '',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleOpportunityInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewOpportunity(prev => ({
       ...prev,
       [name]: value
     }));
@@ -123,65 +76,6 @@ const Profile = () => {
     }
   };
 
-  const handleAddOpportunity = async () => {
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert({
-          ...newOpportunity,
-          company_id: userId,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Oportunidad creada",
-        description: "La oportunidad ha sido creada exitosamente.",
-      });
-
-      setIsAddingOpportunity(false);
-      setNewOpportunity({
-        title: '',
-        description: '',
-        location: '',
-        type: '',
-        duration: '',
-        salary: '',
-      });
-      refetchOpportunities();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la oportunidad. Por favor intenta de nuevo.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteOpportunity = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Oportunidad eliminada",
-        description: "La oportunidad ha sido eliminada exitosamente.",
-      });
-
-      refetchOpportunities();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la oportunidad. Por favor intenta de nuevo.",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (!profile) return <div>Cargando...</div>;
 
   return (
@@ -193,7 +87,7 @@ const Profile = () => {
               <Avatar className="w-32 h-32">
                 <AvatarImage src={profile.avatar_url || "https://github.com/shadcn.png"} />
                 <AvatarFallback>
-                  {profile.company_name?.charAt(0) || 'C'}
+                  {profile.full_name?.charAt(0) || 'S'}
                 </AvatarFallback>
               </Avatar>
               <Button 
@@ -224,71 +118,112 @@ const Profile = () => {
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nombre del Contacto</label>
+                    <label className="block text-sm font-medium mb-1">Nombre Completo</label>
                     <Input
                       name="full_name"
                       value={formData.full_name}
                       onChange={handleInputChange}
-                      placeholder="Nombre del Contacto"
+                      placeholder="Nombre Completo"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nombre de la Empresa</label>
+                    <label className="block text-sm font-medium mb-1">ID de Estudiante</label>
                     <Input
-                      name="company_name"
-                      value={formData.company_name}
+                      name="student_id"
+                      value={formData.student_id}
                       onChange={handleInputChange}
-                      placeholder="Nombre de la Empresa"
+                      placeholder="ID de Estudiante"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Descripción de la Empresa</label>
+                    <label className="block text-sm font-medium mb-1">Universidad</label>
+                    <Input
+                      name="university"
+                      value={formData.university}
+                      onChange={handleInputChange}
+                      placeholder="Universidad"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Carrera</label>
+                    <Input
+                      name="career"
+                      value={formData.career}
+                      onChange={handleInputChange}
+                      placeholder="Carrera"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Major</label>
+                    <Input
+                      name="major"
+                      value={formData.major}
+                      onChange={handleInputChange}
+                      placeholder="Major"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Año de Graduación</label>
+                    <Input
+                      name="graduation_year"
+                      value={formData.graduation_year}
+                      onChange={handleInputChange}
+                      placeholder="Año de Graduación"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">GPA</label>
+                    <Input
+                      name="gpa"
+                      value={formData.gpa}
+                      onChange={handleInputChange}
+                      placeholder="GPA"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Biografía</label>
                     <Textarea
-                      name="company_description"
-                      value={formData.company_description}
+                      name="bio"
+                      value={formData.bio}
                       onChange={handleInputChange}
-                      placeholder="Descripción de la Empresa"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Sitio Web</label>
-                    <Input
-                      name="company_website"
-                      value={formData.company_website}
-                      onChange={handleInputChange}
-                      placeholder="Sitio Web"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Tamaño de la Empresa</label>
-                    <Input
-                      name="company_size"
-                      value={formData.company_size}
-                      onChange={handleInputChange}
-                      placeholder="Tamaño de la Empresa"
+                      placeholder="Cuéntanos sobre ti"
                     />
                   </div>
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold mb-2">{profile.company_name || 'Sin nombre de empresa'}</h1>
-                  <p className="text-gray-600 mb-4">{profile.company_description || 'Sin descripción'}</p>
+                  <h1 className="text-2xl font-bold mb-2">{profile.full_name || 'Sin nombre'}</h1>
+                  <p className="text-gray-600 mb-4">{profile.bio || 'Sin biografía'}</p>
                   
                   <div className="grid gap-4">
                     <div className="flex items-center gap-2 text-gray-600">
-                      <Building size={20} />
-                      <span>Tamaño: {profile.company_size || 'No especificado'}</span>
+                      <School size={20} />
+                      <span>Universidad: {profile.university || 'No especificada'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <GraduationCap size={20} />
+                      <span>Carrera: {profile.career || 'No especificada'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <MapPin size={20} />
-                      <span>Contacto: {profile.full_name || 'No especificado'}</span>
+                      <span>ID de Estudiante: {profile.student_id || 'No especificado'}</span>
                     </div>
-                    {profile.company_website && (
+                    {profile.major && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Building size={20} />
+                        <span>Major: {profile.major}</span>
+                      </div>
+                    )}
+                    {profile.graduation_year && (
                       <div className="flex items-center gap-2 text-gray-600">
                         <Mail size={20} />
-                        <a href={profile.company_website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                          {profile.company_website}
-                        </a>
+                        <span>Año de Graduación: {profile.graduation_year}</span>
+                      </div>
+                    )}
+                    {profile.gpa && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail size={20} />
+                        <span>GPA: {profile.gpa}</span>
                       </div>
                     )}
                   </div>
@@ -298,113 +233,6 @@ const Profile = () => {
           </div>
         </CardContent>
       </Card>
-
-      {profile.role === 'company' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Oportunidades de Trabajo</h2>
-            <Button onClick={() => setIsAddingOpportunity(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Agregar Oportunidad
-            </Button>
-          </div>
-
-          {isAddingOpportunity && (
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold">Nueva Oportunidad</h3>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Título</label>
-                  <Input
-                    name="title"
-                    value={newOpportunity.title}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Título de la posición"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Descripción</label>
-                  <Textarea
-                    name="description"
-                    value={newOpportunity.description}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Descripción detallada de la posición"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Ubicación</label>
-                  <Input
-                    name="location"
-                    value={newOpportunity.location}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Ubicación"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tipo</label>
-                  <Input
-                    name="type"
-                    value={newOpportunity.type}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Tipo de trabajo (ej: Tiempo completo, Medio tiempo)"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Duración</label>
-                  <Input
-                    name="duration"
-                    value={newOpportunity.duration}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Duración"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Salario</label>
-                  <Input
-                    name="salary"
-                    value={newOpportunity.salary}
-                    onChange={handleOpportunityInputChange}
-                    placeholder="Rango salarial"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleAddOpportunity}>
-                    Crear Oportunidad
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsAddingOpportunity(false)}>
-                    Cancelar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid gap-4">
-            {opportunities?.map((opportunity) => (
-              <div key={opportunity.id} className="relative">
-                <OpportunityCard
-                  id={opportunity.id}
-                  title={opportunity.title}
-                  company={profile.company_name || ''}
-                  location={opportunity.location}
-                  type={opportunity.type}
-                  duration={opportunity.duration}
-                  salary={opportunity.salary}
-                  description={opportunity.description}
-                  isCompanyView={true}
-                />
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-4 right-4"
-                  onClick={() => handleDeleteOpportunity(opportunity.id)}
-                >
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
