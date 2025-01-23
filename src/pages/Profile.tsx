@@ -371,6 +371,7 @@ const Profile = () => {
             {opportunities?.map((opportunity) => (
               <div key={opportunity.id} className="relative">
                 <OpportunityCard
+                  id={opportunity.id}
                   title={opportunity.title}
                   company={profile.company_name || ''}
                   location={opportunity.location}
