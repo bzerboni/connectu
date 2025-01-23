@@ -25,7 +25,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#39FF14", // Neon green
+          DEFAULT: "#8B5CF6", // Vivid violet
           foreground: "#ffffff",
         },
         secondary: {
@@ -33,7 +33,7 @@ export default {
           foreground: "#1f2937",
         },
         success: {
-          DEFAULT: "#39FF14", // Neon green
+          DEFAULT: "#8B5CF6", // Vivid violet (matching primary)
           foreground: "#ffffff",
         },
         destructive: {
