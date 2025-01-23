@@ -19,20 +19,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = isLogin 
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-
-      if (error) throw error;
-
-      if (!isLogin) {
-        toast({
-          title: "Registro exitoso",
-          description: "Por favor, inicia sesión para continuar.",
-        });
-        setIsLogin(true);
-      } else {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
         navigate("/explore");
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          // Parse the error message from Supabase
+          const errorBody = error.message && JSON.parse(error.message);
+          if (errorBody?.code === "user_already_exists") {
+            toast({
+              title: "Usuario ya registrado",
+              description: "Este email ya está registrado. Por favor, inicia sesión.",
+              variant: "destructive",
+            });
+            setIsLogin(true);
+          } else {
+            throw error;
+          }
+        } else {
+          toast({
+            title: "Registro exitoso",
+            description: "Por favor, inicia sesión para continuar.",
+          });
+          setIsLogin(true);
+        }
       }
     } catch (error: any) {
       toast({
