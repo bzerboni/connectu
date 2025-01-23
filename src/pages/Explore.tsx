@@ -7,14 +7,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GraduationCap, Building2 } from "lucide-react";
+import { GraduationCap, Building2, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 type Profile = Tables<"profiles">;
 type Opportunity = Tables<"opportunities">;
+type Application = Tables<"applications">;
+
+interface ApplicationWithProfile extends Application {
+  profiles: Profile;
+  opportunities: Opportunity;
+}
 
 const Explore = () => {
   const { session } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user.id],
@@ -58,11 +67,39 @@ const Explore = () => {
     enabled: profile?.role === "student",
   });
 
+  const { data: applications } = useQuery({
+    queryKey: ["applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("applications")
+        .select(`
+          *,
+          profiles (*),
+          opportunities (*)
+        `)
+        .eq("opportunities.company_id", session?.user.id);
+
+      if (error) throw error;
+      return data as ApplicationWithProfile[];
+    },
+    enabled: profile?.role === "company",
+  });
+
   useEffect(() => {
     if (profile) {
       setUserRole(profile.role);
     }
   }, [profile]);
+
+  const handleContact = async (studentEmail: string) => {
+    // Open default email client
+    window.location.href = `mailto:${studentEmail}`;
+    
+    toast({
+      title: "Contacto iniciado",
+      description: "Se ha abierto tu cliente de correo para contactar al estudiante.",
+    });
+  };
 
   const renderStudentCard = (student: Profile) => (
     <Card key={student.id} className="hover:shadow-lg transition-shadow">
@@ -91,6 +128,48 @@ const Explore = () => {
     </Card>
   );
 
+  const renderApplicationCard = (application: ApplicationWithProfile) => (
+    <Card key={application.id} className="hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center gap-4">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={application.profiles.avatar_url || undefined} />
+          <AvatarFallback>
+            {application.profiles.full_name?.charAt(0) || "S"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <CardTitle className="text-lg">{application.profiles.full_name}</CardTitle>
+          <p className="text-sm text-gray-600">{application.profiles.career}</p>
+        </div>
+        <Button 
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={() => handleContact(application.profiles.student_id || "")}
+        >
+          <Mail size={16} />
+          Contactar
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4">
+          <h4 className="font-semibold mb-1">Aplicó a:</h4>
+          <p className="text-sm text-gray-600">{application.opportunities.title}</p>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <GraduationCap size={16} />
+            <span>{application.profiles.university}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Building2 size={16} />
+            <span>GPA: {application.profiles.gpa}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
@@ -100,6 +179,15 @@ const Explore = () => {
       <div className="mb-8">
         <SearchBar />
       </div>
+
+      {userRole === "company" && applications && applications.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold mb-6">Aplicaciones Recibidas</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {applications.map(application => renderApplicationCard(application))}
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {userRole === "company" ? (
