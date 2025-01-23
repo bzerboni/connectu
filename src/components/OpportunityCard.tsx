@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 interface OpportunityCardProps {
   title: string;
@@ -25,10 +29,35 @@ const OpportunityCard = ({
   description 
 }: OpportunityCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleApply = () => {
-    // Aquí iría la lógica de aplicación
-    console.log("Aplicando a:", title);
+  const handleApply = async () => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("applications").insert({
+        opportunity_id: `${company}-${title}`,
+        user_id: session.user.id
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Aplicación exitosa",
+        description: "Tu aplicación ha sido enviada correctamente.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -76,7 +105,7 @@ const OpportunityCard = ({
           className="w-full"
           onClick={handleApply}
         >
-          Aplicar ahora
+          {session ? "Aplicar ahora" : "Inicia sesión para aplicar"}
         </Button>
       </CardFooter>
     </Card>
