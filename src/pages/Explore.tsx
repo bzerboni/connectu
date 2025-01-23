@@ -74,8 +74,8 @@ const Explore = () => {
         .from("applications")
         .select(`
           *,
-          profiles (*),
-          opportunities (*)
+          profiles!applications_user_id_fkey (*),
+          opportunities!inner (*)
         `)
         .eq("opportunities.company_id", session?.user.id);
 
@@ -92,7 +92,6 @@ const Explore = () => {
   }, [profile]);
 
   const handleContact = async (studentEmail: string) => {
-    // Open default email client
     window.location.href = `mailto:${studentEmail}`;
     
     toast({
