@@ -74,13 +74,13 @@ const Explore = () => {
         .from("applications")
         .select(`
           *,
-          profiles!applications_user_id_fkey (*),
+          profiles (*),
           opportunities (*)
         `)
         .eq("opportunities.company_id", session?.user.id);
 
       if (error) throw error;
-      return data as ApplicationWithProfile[];
+      return data as unknown as ApplicationWithProfile[];
     },
     enabled: profile?.role === "company",
   });
