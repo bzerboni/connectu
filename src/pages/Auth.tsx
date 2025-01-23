@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"student" | "company">("student");
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
@@ -24,7 +27,15 @@ const Auth = () => {
         if (error) throw error;
         navigate("/explore");
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            data: {
+              role: role
+            }
+          }
+        });
         if (error) {
           // Parse the error message from Supabase
           const errorBody = error.message && JSON.parse(error.message);
@@ -85,6 +96,27 @@ const Auth = () => {
                 required
               />
             </div>
+            
+            {!isLogin && (
+              <div className="space-y-3">
+                <Label>Tipo de cuenta</Label>
+                <RadioGroup 
+                  value={role} 
+                  onValueChange={(value: "student" | "company") => setRole(value)}
+                  className="flex flex-col space-y-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="student" id="student" />
+                    <Label htmlFor="student">Estudiante</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="company" id="company" />
+                    <Label htmlFor="company">Empresa</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Registrarse"}
             </Button>
