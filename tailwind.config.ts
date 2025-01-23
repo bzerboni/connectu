@@ -25,15 +25,15 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#2563eb",
+          DEFAULT: "#39FF14", // Neon green
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#f3f4f6",
+          DEFAULT: "#E0B0FF", // Lilac
           foreground: "#1f2937",
         },
         success: {
-          DEFAULT: "#10b981",
+          DEFAULT: "#39FF14", // Neon green
           foreground: "#ffffff",
         },
         destructive: {
@@ -45,8 +45,8 @@ export default {
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "#E0B0FF", // Lilac
+          foreground: "#1f2937",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
