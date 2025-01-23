@@ -78,7 +78,7 @@ export type Database = {
           graduation_year?: string | null
           id: string
           major?: string | null
-          role?: string
+          role: string
           student_id?: string | null
           university?: string | null
           updated_at?: string
