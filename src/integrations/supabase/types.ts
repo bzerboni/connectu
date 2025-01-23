@@ -51,6 +51,39 @@ export type Database = {
           },
         ]
       }
+      company_profiles: {
+        Row: {
+          avatar_url: string | null
+          company_description: string | null
+          company_name: string | null
+          company_size: string | null
+          company_website: string | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          company_website?: string | null
+          created_at?: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          company_website?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       opportunities: {
         Row: {
           company_id: string
@@ -152,6 +185,54 @@ export type Database = {
           id?: string
           major?: string | null
           role?: string
+          student_id?: string | null
+          university?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      student_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          career: string | null
+          created_at: string
+          cv_url: string | null
+          full_name: string | null
+          gpa: string | null
+          graduation_year: string | null
+          id: string
+          major: string | null
+          student_id: string | null
+          university: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          career?: string | null
+          created_at?: string
+          cv_url?: string | null
+          full_name?: string | null
+          gpa?: string | null
+          graduation_year?: string | null
+          id: string
+          major?: string | null
+          student_id?: string | null
+          university?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          career?: string | null
+          created_at?: string
+          cv_url?: string | null
+          full_name?: string | null
+          gpa?: string | null
+          graduation_year?: string | null
+          id?: string
+          major?: string | null
           student_id?: string | null
           university?: string | null
           updated_at?: string

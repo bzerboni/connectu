@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, MapPin, Building, Plus, Trash, GraduationCap, School } from "lucide-react";
+import { MapPin, Building, GraduationCap, School, Upload } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import OpportunityCard from "@/components/OpportunityCard";
 import { Textarea } from "@/components/ui/textarea";
 
 const Profile = () => {
@@ -18,10 +17,10 @@ const Profile = () => {
   const userId = session?.user.id;
 
   const { data: profile, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', userId],
+    queryKey: ['student_profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('student_profiles')
         .select('*')
         .eq('id', userId)
         .single();
@@ -36,10 +35,7 @@ const Profile = () => {
     full_name: profile?.full_name || '',
     university: profile?.university || '',
     career: profile?.career || '',
-    student_id: profile?.student_id || '',
     graduation_year: profile?.graduation_year || '',
-    major: profile?.major || '',
-    gpa: profile?.gpa || '',
     bio: profile?.bio || '',
   });
 
@@ -51,10 +47,55 @@ const Profile = () => {
     }));
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: 'cv' | 'avatar') => {
+    if (!e.target.files || e.target.files.length === 0) {
+      return;
+    }
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${userId}/${fileType}.${fileExt}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('student_files')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('student_files')
+        .getPublicUrl(filePath);
+
+      const updateData = fileType === 'cv' 
+        ? { cv_url: publicUrl }
+        : { avatar_url: publicUrl };
+
+      const { error: updateError } = await supabase
+        .from('student_profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Archivo subido exitosamente",
+        description: `Tu ${fileType === 'cv' ? 'CV' : 'foto'} ha sido actualizado.`,
+      });
+
+      refetchProfile();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `No se pudo subir el archivo. ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('student_profiles')
         .update(formData)
         .eq('id', userId);
 
@@ -90,6 +131,43 @@ const Profile = () => {
                   {profile.full_name?.charAt(0) || 'S'}
                 </AvatarFallback>
               </Avatar>
+              <Input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="avatar-upload"
+                onChange={(e) => handleFileUpload(e, 'avatar')}
+              />
+              <label htmlFor="avatar-upload">
+                <Button variant="outline" className="mt-4 cursor-pointer" asChild>
+                  <span>Cambiar Foto</span>
+                </Button>
+              </label>
+              <Input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className="hidden"
+                id="cv-upload"
+                onChange={(e) => handleFileUpload(e, 'cv')}
+              />
+              <label htmlFor="cv-upload">
+                <Button variant="outline" className="mt-2 cursor-pointer" asChild>
+                  <span className="flex items-center gap-2">
+                    <Upload size={16} />
+                    {profile.cv_url ? 'Actualizar CV' : 'Subir CV'}
+                  </span>
+                </Button>
+              </label>
+              {profile.cv_url && (
+                <a
+                  href={profile.cv_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 text-sm text-blue-600 hover:underline"
+                >
+                  Ver CV actual
+                </a>
+              )}
               <Button 
                 variant={isEditing ? "default" : "outline"} 
                 className="mt-4"
@@ -127,15 +205,6 @@ const Profile = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">ID de Estudiante</label>
-                    <Input
-                      name="student_id"
-                      value={formData.student_id}
-                      onChange={handleInputChange}
-                      placeholder="ID de Estudiante"
-                    />
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium mb-1">Universidad</label>
                     <Input
                       name="university"
@@ -154,30 +223,12 @@ const Profile = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Major</label>
-                    <Input
-                      name="major"
-                      value={formData.major}
-                      onChange={handleInputChange}
-                      placeholder="Major"
-                    />
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium mb-1">Año de Graduación</label>
                     <Input
                       name="graduation_year"
                       value={formData.graduation_year}
                       onChange={handleInputChange}
                       placeholder="Año de Graduación"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">GPA</label>
-                    <Input
-                      name="gpa"
-                      value={formData.gpa}
-                      onChange={handleInputChange}
-                      placeholder="GPA"
                     />
                   </div>
                   <div>
@@ -205,27 +256,9 @@ const Profile = () => {
                       <span>Carrera: {profile.career || 'No especificada'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin size={20} />
-                      <span>ID de Estudiante: {profile.student_id || 'No especificado'}</span>
+                      <Building size={20} />
+                      <span>Año de Graduación: {profile.graduation_year || 'No especificado'}</span>
                     </div>
-                    {profile.major && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Building size={20} />
-                        <span>Major: {profile.major}</span>
-                      </div>
-                    )}
-                    {profile.graduation_year && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Mail size={20} />
-                        <span>Año de Graduación: {profile.graduation_year}</span>
-                      </div>
-                    )}
-                    {profile.gpa && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Mail size={20} />
-                        <span>GPA: {profile.gpa}</span>
-                      </div>
-                    )}
                   </div>
                 </>
               )}
