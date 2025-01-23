@@ -49,9 +49,18 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           career: string | null
+          company_description: string | null
+          company_name: string | null
+          company_size: string | null
+          company_website: string | null
           created_at: string
           full_name: string | null
+          gpa: string | null
+          graduation_year: string | null
           id: string
+          major: string | null
+          role: string
+          student_id: string | null
           university: string | null
           updated_at: string
         }
@@ -59,9 +68,18 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           career?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          company_website?: string | null
           created_at?: string
           full_name?: string | null
+          gpa?: string | null
+          graduation_year?: string | null
           id: string
+          major?: string | null
+          role?: string
+          student_id?: string | null
           university?: string | null
           updated_at?: string
         }
@@ -69,9 +87,18 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           career?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          company_website?: string | null
           created_at?: string
           full_name?: string | null
+          gpa?: string | null
+          graduation_year?: string | null
           id?: string
+          major?: string | null
+          role?: string
+          student_id?: string | null
           university?: string | null
           updated_at?: string
         }

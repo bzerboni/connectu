@@ -1,5 +1,37 @@
+import { useEffect, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import OpportunityCard from "@/components/OpportunityCard";
+import { useAuth } from "@/components/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
+
+type Profile = Tables<"profiles">;
+
+const Explore = () => {
+  const { session } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session?.user.id)
+        .single();
+
+      if (error) throw error;
+      return data as Profile;
+    },
+    enabled: !!session?.user.id,
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setUserRole(profile.role);
+    }
+  }, [profile]);
 
 const MOCK_OPPORTUNITIES = [
   {
@@ -112,18 +144,34 @@ const MOCK_OPPORTUNITIES = [
   }
 ];
 
-const Explore = () => {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Explorar Oportunidades</h1>
+      <h1 className="text-3xl font-bold mb-8">
+        {userRole === "company" ? "Gestionar Oportunidades" : "Explorar Oportunidades"}
+      </h1>
       
       <div className="mb-8">
-        <SearchBar />
+        {userRole === "company" ? (
+          <div className="flex justify-end">
+            <button
+              onClick={() => {/* TODO: Implement create opportunity */}}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
+            >
+              Crear Nueva Oportunidad
+            </button>
+          </div>
+        ) : (
+          <SearchBar />
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {MOCK_OPPORTUNITIES.map((opportunity, index) => (
-          <OpportunityCard key={index} {...opportunity} />
+          <OpportunityCard 
+            key={index} 
+            {...opportunity} 
+            isCompanyView={userRole === "company"}
+          />
         ))}
       </div>
     </div>
