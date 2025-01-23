@@ -10,6 +10,7 @@ import { useAuth } from "./AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
 
 interface OpportunityCardProps {
+  id: string; // Add id to props
   title: string;
   company: string;
   location: string;
@@ -21,6 +22,7 @@ interface OpportunityCardProps {
 }
 
 const OpportunityCard = ({ 
+  id, // Add id to destructuring
   title, 
   company, 
   location, 
@@ -43,7 +45,7 @@ const OpportunityCard = ({
 
     try {
       const { error } = await supabase.from("applications").insert({
-        opportunity_id: `${company}-${title}`,
+        opportunity_id: id, // Use the actual UUID
         user_id: session.user.id
       });
 

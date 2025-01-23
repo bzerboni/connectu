@@ -68,7 +68,7 @@ const Explore = () => {
   });
 
   const { data: applications } = useQuery({
-    queryKey: ["applications"],
+    queryKey: ["applications", session?.user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("applications")
@@ -77,12 +77,12 @@ const Explore = () => {
           profiles (*),
           opportunities (*)
         `)
-        .eq("opportunities.company_id", session?.user.id);
+        .eq("user_id", session?.user.id);
 
       if (error) throw error;
       return data as unknown as ApplicationWithProfile[];
     },
-    enabled: profile?.role === "company",
+    enabled: !!session?.user.id && profile?.role === "company",
   });
 
   useEffect(() => {
@@ -195,6 +195,7 @@ const Explore = () => {
           opportunities?.map(opportunity => (
             <OpportunityCard
               key={opportunity.id}
+              id={opportunity.id}
               title={opportunity.title}
               company={opportunity.profiles.company_name || ""}
               location={opportunity.location}
