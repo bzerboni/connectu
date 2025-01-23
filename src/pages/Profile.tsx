@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, MapPin, Building, Plus, Edit, Trash } from "lucide-react";
+import { Mail, MapPin, Building, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/AuthProvider";
@@ -40,6 +40,24 @@ const Profile = () => {
         .from('opportunities')
         .select('*')
         .eq('company_id', userId);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && profile?.role === 'company',
+  });
+
+  const { data: applications } = useQuery({
+    queryKey: ['applications', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('applications')
+        .select(`
+          *,
+          profiles (*),
+          opportunities (*)
+        `)
+        .eq('opportunities.company_id', userId);
 
       if (error) throw error;
       return data;
@@ -186,13 +204,6 @@ const Profile = () => {
                     handleSave();
                   } else {
                     setIsEditing(true);
-                    setFormData({
-                      full_name: profile.full_name || '',
-                      company_name: profile.company_name || '',
-                      company_description: profile.company_description || '',
-                      company_website: profile.company_website || '',
-                      company_size: profile.company_size || '',
-                    });
                   }
                 }}
               >
