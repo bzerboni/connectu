@@ -17,6 +17,7 @@ interface OpportunityCardProps {
   duration: string;
   salary: string;
   description: string;
+  isCompanyView?: boolean;
 }
 
 const OpportunityCard = ({ 
@@ -26,7 +27,8 @@ const OpportunityCard = ({
   type, 
   duration, 
   salary,
-  description 
+  description,
+  isCompanyView = false
 }: OpportunityCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { session } = useAuth();
@@ -101,12 +103,14 @@ const OpportunityCard = ({
           {isExpanded ? "Ver menos" : "Ver más"}
           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </Button>
-        <Button 
-          className="w-full"
-          onClick={handleApply}
-        >
-          {session ? "Aplicar ahora" : "Inicia sesión para aplicar"}
-        </Button>
+        {!isCompanyView && (
+          <Button 
+            className="w-full"
+            onClick={handleApply}
+          >
+            {session ? "Aplicar ahora" : "Inicia sesión para aplicar"}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
