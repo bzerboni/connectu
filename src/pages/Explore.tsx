@@ -5,8 +5,12 @@ import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GraduationCap, Building2 } from "lucide-react";
 
 type Profile = Tables<"profiles">;
+type Opportunity = Tables<"opportunities">;
 
 const Explore = () => {
   const { session } = useAuth();
@@ -27,152 +31,93 @@ const Explore = () => {
     enabled: !!session?.user.id,
   });
 
+  const { data: students } = useQuery({
+    queryKey: ["students"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "student");
+
+      if (error) throw error;
+      return data as Profile[];
+    },
+    enabled: profile?.role === "company",
+  });
+
+  const { data: opportunities } = useQuery({
+    queryKey: ["opportunities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("opportunities")
+        .select("*, profiles(company_name)");
+
+      if (error) throw error;
+      return data as (Opportunity & { profiles: { company_name: string | null } })[];
+    },
+    enabled: profile?.role === "student",
+  });
+
   useEffect(() => {
     if (profile) {
       setUserRole(profile.role);
     }
   }, [profile]);
 
-const MOCK_OPPORTUNITIES = [
-  {
-    title: "Pasante de Marketing Digital",
-    company: "TechCorp",
-    location: "Ciudad de México",
-    type: "Pasantía",
-    duration: "3 meses",
-    salary: "$30,000 MXN/mes",
-    description: "Buscamos un pasante de marketing digital para ayudar con campañas en redes sociales y análisis de datos.",
-  },
-  {
-    title: "Content Creator Jr",
-    company: "Mercado Libre",
-    location: "Buenos Aires, Argentina",
-    type: "Freelance",
-    duration: "2 meses",
-    salary: "ARS 150,000/mes",
-    description: "Creación de contenido para redes sociales y blog de la empresa. Experiencia en fotografía y edición de video.",
-  },
-  {
-    title: "Desarrollador Frontend",
-    company: "Globant",
-    location: "Córdoba, Argentina",
-    type: "Tiempo completo",
-    duration: "6 meses",
-    salary: "ARS 450,000/mes",
-    description: "Desarrollo de interfaces de usuario con React y TypeScript para proyectos internacionales.",
-  },
-  {
-    title: "Community Manager",
-    company: "Despegar",
-    location: "Buenos Aires, Argentina",
-    type: "Part-time",
-    duration: "3 meses",
-    salary: "ARS 120,000/mes",
-    description: "Gestión de redes sociales y creación de contenido para marca líder en turismo.",
-  },
-  {
-    title: "Data Analyst Intern",
-    company: "Banco Galicia",
-    location: "Buenos Aires, Argentina",
-    type: "Pasantía",
-    duration: "4 meses",
-    salary: "ARS 180,000/mes",
-    description: "Análisis de datos financieros y creación de reportes para la toma de decisiones.",
-  },
-  {
-    title: "UX/UI Designer",
-    company: "Accenture",
-    location: "Rosario, Argentina",
-    type: "Proyecto",
-    duration: "2 meses",
-    salary: "ARS 200,000/proyecto",
-    description: "Diseño de interfaces de usuario para aplicación móvil del sector financiero.",
-  },
-  {
-    title: "Social Media Creator",
-    company: "Personal",
-    location: "Buenos Aires, Argentina",
-    type: "Freelance",
-    duration: "1 mes",
-    salary: "ARS 100,000/proyecto",
-    description: "Creación de contenido para campaña de marketing digital específica.",
-  },
-  {
-    title: "Backend Developer Jr",
-    company: "OLX",
-    location: "Buenos Aires, Argentina",
-    type: "Tiempo completo",
-    duration: "6 meses",
-    salary: "ARS 400,000/mes",
-    description: "Desarrollo de APIs y servicios backend con Node.js y PostgreSQL.",
-  },
-  {
-    title: "Marketing Research",
-    company: "Rappi",
-    location: "Mendoza, Argentina",
-    type: "Proyecto",
-    duration: "3 meses",
-    salary: "ARS 250,000/proyecto",
-    description: "Investigación de mercado y análisis de competencia para expansión de servicios.",
-  },
-  {
-    title: "Content Writer",
-    company: "Naranja X",
-    location: "Córdoba, Argentina",
-    type: "Freelance",
-    duration: "2 meses",
-    salary: "ARS 90,000/mes",
-    description: "Creación de contenido para blog y redes sociales del sector fintech.",
-  },
-  {
-    title: "Business Analyst Intern",
-    company: "MercadoPago",
-    location: "Buenos Aires, Argentina",
-    type: "Pasantía",
-    duration: "5 meses",
-    salary: "ARS 200,000/mes",
-    description: "Análisis de procesos de negocio y propuesta de mejoras para productos financieros.",
-  },
-  {
-    title: "Video Editor",
-    company: "Ualá",
-    location: "Buenos Aires, Argentina",
-    type: "Proyecto",
-    duration: "1 mes",
-    salary: "ARS 150,000/proyecto",
-    description: "Edición de videos para campaña de marketing en redes sociales.",
-  }
-];
+  const renderStudentCard = (student: Profile) => (
+    <Card key={student.id} className="hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center gap-4">
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={student.avatar_url || undefined} />
+          <AvatarFallback>
+            {student.full_name?.charAt(0) || "S"}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <CardTitle className="text-lg">{student.full_name}</CardTitle>
+          <p className="text-sm text-gray-600">{student.career}</p>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <GraduationCap size={16} />
+          <span>{student.university}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Building2 size={16} />
+          <span>GPA: {student.gpa}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">
-        {userRole === "company" ? "Gestionar Oportunidades" : "Explorar Oportunidades"}
+        {userRole === "company" ? "Explorar Estudiantes" : "Explorar Oportunidades"}
       </h1>
       
       <div className="mb-8">
-        {userRole === "company" ? (
-          <div className="flex justify-end">
-            <button
-              onClick={() => {/* TODO: Implement create opportunity */}}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors"
-            >
-              Crear Nueva Oportunidad
-            </button>
-          </div>
-        ) : (
-          <SearchBar />
-        )}
+        <SearchBar />
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {MOCK_OPPORTUNITIES.map((opportunity, index) => (
-          <OpportunityCard 
-            key={index} 
-            {...opportunity} 
-            isCompanyView={userRole === "company"}
-          />
-        ))}
+        {userRole === "company" ? (
+          students?.map(student => renderStudentCard(student))
+        ) : (
+          opportunities?.map(opportunity => (
+            <OpportunityCard
+              key={opportunity.id}
+              title={opportunity.title}
+              company={opportunity.profiles.company_name || ""}
+              location={opportunity.location}
+              type={opportunity.type}
+              duration={opportunity.duration}
+              salary={opportunity.salary}
+              description={opportunity.description}
+            />
+          ))
+        )}
       </div>
     </div>
   );

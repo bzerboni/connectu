@@ -44,6 +44,53 @@ export type Database = {
           },
         ]
       }
+      opportunities: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string
+          duration: string
+          id: string
+          location: string
+          salary: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description: string
+          duration: string
+          id?: string
+          location: string
+          salary: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string
+          duration?: string
+          id?: string
+          location?: string
+          salary?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
