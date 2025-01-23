@@ -75,7 +75,7 @@ const Explore = () => {
         .select(`
           *,
           profiles!applications_user_id_fkey (*),
-          opportunities!inner (*)
+          opportunities (*)
         `)
         .eq("opportunities.company_id", session?.user.id);
 
