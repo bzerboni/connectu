@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -21,13 +21,35 @@ const Profile = () => {
     career: '',
     graduation_year: '',
     bio: '',
+    company_name: '',
+    company_description: '',
+    company_website: '',
+    company_size: '',
   });
 
-  const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
-    queryKey: ['student_profile', userId],
+  // Get user role from profiles table
+  const { data: userProfile } = useQuery({
+    queryKey: ['user_role', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('student_profiles')
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const isCompany = userProfile?.role === 'company';
+
+  const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
+    queryKey: ['profile', userId, isCompany],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
@@ -40,15 +62,33 @@ const Profile = () => {
 
   useEffect(() => {
     if (profile) {
-      setFormData({
-        full_name: profile.full_name || '',
-        university: profile.university || '',
-        career: profile.career || '',
-        graduation_year: profile.graduation_year || '',
-        bio: profile.bio || '',
-      });
+      if (isCompany) {
+        setFormData({
+          full_name: profile.full_name || '',
+          company_name: profile.company_name || '',
+          company_description: profile.company_description || '',
+          company_website: profile.company_website || '',
+          company_size: profile.company_size || '',
+          bio: profile.bio || '',
+          university: '',
+          career: '',
+          graduation_year: '',
+        });
+      } else {
+        setFormData({
+          full_name: profile.full_name || '',
+          university: profile.university || '',
+          career: profile.career || '',
+          graduation_year: profile.graduation_year || '',
+          bio: profile.bio || '',
+          company_name: '',
+          company_description: '',
+          company_website: '',
+          company_size: '',
+        });
+      }
     }
-  }, [profile]);
+  }, [profile, isCompany]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -82,7 +122,7 @@ const Profile = () => {
         : { avatar_url: publicUrl };
 
       const { error: updateError } = await supabase
-        .from('student_profiles')
+        .from('profiles')
         .update(updateData)
         .eq('id', userId);
 
@@ -106,7 +146,7 @@ const Profile = () => {
   const handleSave = async () => {
     try {
       const { error } = await supabase
-        .from('student_profiles')
+        .from('profiles')
         .update(formData)
         .eq('id', userId);
 
@@ -170,30 +210,34 @@ const Profile = () => {
                   <span>Cambiar Foto</span>
                 </Button>
               </label>
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                className="hidden"
-                id="cv-upload"
-                onChange={(e) => handleFileUpload(e, 'cv')}
-              />
-              <label htmlFor="cv-upload">
-                <Button variant="outline" className="mt-2 cursor-pointer" asChild>
-                  <span className="flex items-center gap-2">
-                    <Upload size={16} />
-                    {profile.cv_url ? 'Actualizar CV' : 'Subir CV'}
-                  </span>
-                </Button>
-              </label>
-              {profile.cv_url && (
-                <a
-                  href={profile.cv_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 text-sm text-blue-600 hover:underline"
-                >
-                  Ver CV actual
-                </a>
+              {!isCompany && (
+                <>
+                  <Input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    id="cv-upload"
+                    onChange={(e) => handleFileUpload(e, 'cv')}
+                  />
+                  <label htmlFor="cv-upload">
+                    <Button variant="outline" className="mt-2 cursor-pointer" asChild>
+                      <span className="flex items-center gap-2">
+                        <Upload size={16} />
+                        {profile.cv_url ? 'Actualizar CV' : 'Subir CV'}
+                      </span>
+                    </Button>
+                  </label>
+                  {profile.cv_url && (
+                    <a
+                      href={profile.cv_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 text-sm text-blue-600 hover:underline"
+                    >
+                      Ver CV actual
+                    </a>
+                  )}
+                </>
               )}
               <Button 
                 variant={isEditing ? "default" : "outline"} 
@@ -231,33 +275,76 @@ const Profile = () => {
                       placeholder="Nombre Completo"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Universidad</label>
-                    <Input
-                      name="university"
-                      value={formData.university}
-                      onChange={handleInputChange}
-                      placeholder="Universidad"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Carrera</label>
-                    <Input
-                      name="career"
-                      value={formData.career}
-                      onChange={handleInputChange}
-                      placeholder="Carrera"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Año de Graduación</label>
-                    <Input
-                      name="graduation_year"
-                      value={formData.graduation_year}
-                      onChange={handleInputChange}
-                      placeholder="Año de Graduación"
-                    />
-                  </div>
+                  {isCompany ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Nombre de la Empresa</label>
+                        <Input
+                          name="company_name"
+                          value={formData.company_name}
+                          onChange={handleInputChange}
+                          placeholder="Nombre de la Empresa"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Descripción de la Empresa</label>
+                        <Textarea
+                          name="company_description"
+                          value={formData.company_description}
+                          onChange={handleInputChange}
+                          placeholder="Descripción de la Empresa"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Sitio Web</label>
+                        <Input
+                          name="company_website"
+                          value={formData.company_website}
+                          onChange={handleInputChange}
+                          placeholder="https://ejemplo.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Tamaño de la Empresa</label>
+                        <Input
+                          name="company_size"
+                          value={formData.company_size}
+                          onChange={handleInputChange}
+                          placeholder="Ej: 1-10 empleados"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Universidad</label>
+                        <Input
+                          name="university"
+                          value={formData.university}
+                          onChange={handleInputChange}
+                          placeholder="Universidad"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Carrera</label>
+                        <Input
+                          name="career"
+                          value={formData.career}
+                          onChange={handleInputChange}
+                          placeholder="Carrera"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Año de Graduación</label>
+                        <Input
+                          name="graduation_year"
+                          value={formData.graduation_year}
+                          onChange={handleInputChange}
+                          placeholder="Año de Graduación"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className="block text-sm font-medium mb-1">Biografía</label>
                     <Textarea
@@ -270,22 +357,37 @@ const Profile = () => {
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold mb-2">{profile.full_name || 'Sin nombre'}</h1>
+                  <h1 className="text-2xl font-bold mb-2">{isCompany ? profile.company_name : profile.full_name || 'Sin nombre'}</h1>
                   <p className="text-gray-600 mb-4">{profile.bio || 'Sin biografía'}</p>
                   
                   <div className="grid gap-4">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <School size={20} />
-                      <span>Universidad: {profile.university || 'No especificada'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <GraduationCap size={20} />
-                      <span>Carrera: {profile.career || 'No especificada'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Building size={20} />
-                      <span>Año de Graduación: {profile.graduation_year || 'No especificado'}</span>
-                    </div>
+                    {isCompany ? (
+                      <>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Building size={20} />
+                          <span>Sitio Web: {profile.company_website || 'No especificado'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <MapPin size={20} />
+                          <span>Tamaño: {profile.company_size || 'No especificado'}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <School size={20} />
+                          <span>Universidad: {profile.university || 'No especificada'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <GraduationCap size={20} />
+                          <span>Carrera: {profile.career || 'No especificada'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Building size={20} />
+                          <span>Año de Graduación: {profile.graduation_year || 'No especificado'}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
