@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 type ProfileViewProps = {
   isCompany: boolean;
   profile: {
+    id: string;
     company_name?: string | null;
     company_description?: string | null;
     company_website?: string | null;
