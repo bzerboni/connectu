@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Building, GraduationCap, School, Upload } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { Textarea } from "@/components/ui/textarea";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { CVUpload } from "@/components/profile/CVUpload";
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { ProfileView } from "@/components/profile/ProfileView";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -27,7 +27,6 @@ const Profile = () => {
     company_size: '',
   });
 
-  // Get user role from profiles table
   const { data: userProfile } = useQuery({
     queryKey: ['user_role', userId],
     queryFn: async () => {
@@ -45,7 +44,6 @@ const Profile = () => {
 
   const isCompany = userProfile?.role === 'company';
 
-  // Get student profile if user is a student
   const { data: studentProfile } = useQuery({
     queryKey: ['student_profile', userId],
     queryFn: async () => {
@@ -62,7 +60,7 @@ const Profile = () => {
   });
 
   const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', userId, isCompany],
+    queryKey: ['profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -75,36 +73,6 @@ const Profile = () => {
     },
     enabled: !!userId,
   });
-
-  useEffect(() => {
-    if (profile) {
-      if (isCompany) {
-        setFormData({
-          full_name: profile.full_name || '',
-          company_name: profile.company_name || '',
-          company_description: profile.company_description || '',
-          company_website: profile.company_website || '',
-          company_size: profile.company_size || '',
-          bio: profile.bio || '',
-          university: '',
-          career: '',
-          graduation_year: '',
-        });
-      } else {
-        setFormData({
-          full_name: profile.full_name || '',
-          university: profile.university || '',
-          career: profile.career || '',
-          graduation_year: profile.graduation_year || '',
-          bio: profile.bio || '',
-          company_name: '',
-          company_description: '',
-          company_website: '',
-          company_size: '',
-        });
-      }
-    }
-  }, [profile, isCompany]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -133,7 +101,6 @@ const Profile = () => {
         .from('student_files')
         .getPublicUrl(filePath);
 
-      // Update the correct table based on file type and user role
       if (fileType === 'cv' && !isCompany) {
         const { error: updateError } = await supabase
           .from('student_profiles')
@@ -214,53 +181,19 @@ const Profile = () => {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex flex-col items-center">
-              <Avatar className="w-32 h-32">
-                <AvatarImage src={profile.avatar_url || "https://github.com/shadcn.png"} />
-                <AvatarFallback>
-                  {profile.full_name?.charAt(0) || 'S'}
-                </AvatarFallback>
-              </Avatar>
-              <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                id="avatar-upload"
-                onChange={(e) => handleFileUpload(e, 'avatar')}
+              <AvatarUpload
+                avatarUrl={profile.avatar_url}
+                fullName={profile.full_name}
+                onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
-              <label htmlFor="avatar-upload">
-                <Button variant="outline" className="mt-4 cursor-pointer" asChild>
-                  <span>Cambiar Foto</span>
-                </Button>
-              </label>
+              
               {!isCompany && (
-                <>
-                  <Input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    id="cv-upload"
-                    onChange={(e) => handleFileUpload(e, 'cv')}
-                  />
-                  <label htmlFor="cv-upload">
-                    <Button variant="outline" className="mt-2 cursor-pointer" asChild>
-                      <span className="flex items-center gap-2">
-                        <Upload size={16} />
-                        {studentProfile?.cv_url ? 'Actualizar CV' : 'Subir CV'}
-                      </span>
-                    </Button>
-                  </label>
-                  {studentProfile?.cv_url && (
-                    <a
-                      href={studentProfile.cv_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 text-sm text-blue-600 hover:underline"
-                    >
-                      Ver CV actual
-                    </a>
-                  )}
-                </>
+                <CVUpload
+                  cvUrl={studentProfile?.cv_url}
+                  onFileUpload={(e) => handleFileUpload(e, 'cv')}
+                />
               )}
+              
               <Button 
                 variant={isEditing ? "default" : "outline"} 
                 className="mt-4"
@@ -287,131 +220,16 @@ const Profile = () => {
             
             <div className="flex-1">
               {isEditing ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Nombre Completo</label>
-                    <Input
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={handleInputChange}
-                      placeholder="Nombre Completo"
-                    />
-                  </div>
-                  {isCompany ? (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Nombre de la Empresa</label>
-                        <Input
-                          name="company_name"
-                          value={formData.company_name}
-                          onChange={handleInputChange}
-                          placeholder="Nombre de la Empresa"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Descripción de la Empresa</label>
-                        <Textarea
-                          name="company_description"
-                          value={formData.company_description}
-                          onChange={handleInputChange}
-                          placeholder="Descripción de la Empresa"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Sitio Web</label>
-                        <Input
-                          name="company_website"
-                          value={formData.company_website}
-                          onChange={handleInputChange}
-                          placeholder="https://ejemplo.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Tamaño de la Empresa</label>
-                        <Input
-                          name="company_size"
-                          value={formData.company_size}
-                          onChange={handleInputChange}
-                          placeholder="Ej: 1-10 empleados"
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Universidad</label>
-                        <Input
-                          name="university"
-                          value={formData.university}
-                          onChange={handleInputChange}
-                          placeholder="Universidad"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Carrera</label>
-                        <Input
-                          name="career"
-                          value={formData.career}
-                          onChange={handleInputChange}
-                          placeholder="Carrera"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Año de Graduación</label>
-                        <Input
-                          name="graduation_year"
-                          value={formData.graduation_year}
-                          onChange={handleInputChange}
-                          placeholder="Año de Graduación"
-                        />
-                      </div>
-                    </>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Biografía</label>
-                    <Textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                      placeholder="Cuéntanos sobre ti"
-                    />
-                  </div>
-                </div>
+                <ProfileForm
+                  formData={formData}
+                  isCompany={isCompany}
+                  onChange={handleInputChange}
+                />
               ) : (
-                <>
-                  <h1 className="text-2xl font-bold mb-2">{isCompany ? profile.company_name : profile.full_name || 'Sin nombre'}</h1>
-                  <p className="text-gray-600 mb-4">{profile.bio || 'Sin biografía'}</p>
-                  
-                  <div className="grid gap-4">
-                    {isCompany ? (
-                      <>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Building size={20} />
-                          <span>Sitio Web: {profile.company_website || 'No especificado'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <MapPin size={20} />
-                          <span>Tamaño: {profile.company_size || 'No especificado'}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <School size={20} />
-                          <span>Universidad: {profile.university || 'No especificada'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <GraduationCap size={20} />
-                          <span>Carrera: {profile.career || 'No especificada'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Building size={20} />
-                          <span>Año de Graduación: {profile.graduation_year || 'No especificado'}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
+                <ProfileView
+                  isCompany={isCompany}
+                  profile={profile}
+                />
               )}
             </div>
           </div>
