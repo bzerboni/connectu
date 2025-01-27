@@ -23,7 +23,14 @@ interface OpportunityWithCompany extends Opportunity {
 }
 
 interface ApplicationWithProfile extends Application {
-  student_profiles: StudentProfile;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+    career: string | null;
+    university: string | null;
+    graduation_year: string | null;
+    student_id: string | null;
+  };
   opportunities: Opportunity;
 }
 
@@ -103,7 +110,14 @@ const Explore = () => {
         .from("applications")
         .select(`
           *,
-          student_profiles (*),
+          profiles (
+            full_name,
+            avatar_url,
+            career,
+            university,
+            graduation_year,
+            student_id
+          ),
           opportunities (*)
         `)
         .eq("opportunity_id", profile?.id);
@@ -154,20 +168,20 @@ const Explore = () => {
     <Card key={application.id} className="hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4">
         <Avatar className="w-12 h-12">
-          <AvatarImage src={application.student_profiles.avatar_url || undefined} />
+          <AvatarImage src={application.profiles.avatar_url || undefined} />
           <AvatarFallback>
-            {application.student_profiles.full_name?.charAt(0) || "S"}
+            {application.profiles.full_name?.charAt(0) || "S"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <CardTitle className="text-lg">{application.student_profiles.full_name}</CardTitle>
-          <p className="text-sm text-gray-600">{application.student_profiles.career}</p>
+          <CardTitle className="text-lg">{application.profiles.full_name}</CardTitle>
+          <p className="text-sm text-gray-600">{application.profiles.career}</p>
         </div>
         <Button 
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
-          onClick={() => handleContact(application.student_profiles.student_id || "")}
+          onClick={() => handleContact(application.profiles.student_id || "")}
         >
           <Mail size={16} />
           Contactar
@@ -181,11 +195,11 @@ const Explore = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <GraduationCap size={16} />
-            <span>{application.student_profiles.university}</span>
+            <span>{application.profiles.university}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Building2 size={16} />
-            <span>{application.student_profiles.graduation_year}</span>
+            <span>{application.profiles.graduation_year}</span>
           </div>
         </div>
       </CardContent>
