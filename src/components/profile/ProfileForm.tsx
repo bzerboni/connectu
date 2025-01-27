@@ -39,7 +39,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               name="company_description"
               value={formData.company_description}
               onChange={onChange}
-              placeholder="Descripción de la Empresa"
+              placeholder="Cuéntanos sobre tu empresa, su misión y valores"
             />
           </div>
           <div>
@@ -49,6 +49,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               value={formData.company_website}
               onChange={onChange}
               placeholder="https://ejemplo.com"
+              type="url"
             />
           </div>
           <div>
@@ -57,7 +58,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               name="company_size"
               value={formData.company_size}
               onChange={onChange}
-              placeholder="Ej: 1-10 empleados"
+              placeholder="Ej: 1-10 empleados, 11-50 empleados, etc."
             />
           </div>
         </>
