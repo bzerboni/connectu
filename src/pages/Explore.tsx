@@ -16,6 +16,10 @@ type StudentProfile = Tables<"student_profiles">;
 type Opportunity = Tables<"opportunities">;
 type Application = Tables<"applications">;
 
+interface OpportunityWithCompany extends Opportunity {
+  company_profiles: Pick<CompanyProfile, "company_name">;
+}
+
 interface ApplicationWithProfile extends Application {
   student_profiles: StudentProfile;
   opportunities: Opportunity;
@@ -72,15 +76,20 @@ const Explore = () => {
     enabled: profile?.role === "company",
   });
 
-  const { data: opportunities } = useQuery({
+  const { data: opportunities } = useQuery<OpportunityWithCompany[]>({
     queryKey: ["opportunities"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("opportunities")
-        .select("*, company_profiles(company_name)");
+        .select(`
+          *,
+          company_profiles (
+            company_name
+          )
+        `);
 
       if (error) throw error;
-      return data as (Opportunity & { company_profiles: { company_name: string | null } })[];
+      return data;
     },
     enabled: profile?.role === "student",
   });
