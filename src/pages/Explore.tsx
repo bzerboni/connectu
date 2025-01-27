@@ -17,7 +17,9 @@ type Opportunity = Tables<"opportunities">;
 type Application = Tables<"applications">;
 
 interface OpportunityWithCompany extends Opportunity {
-  company_profiles: Pick<CompanyProfile, "company_name">;
+  company_profiles: {
+    company_name: string | null;
+  };
 }
 
 interface ApplicationWithProfile extends Application {
@@ -89,7 +91,7 @@ const Explore = () => {
         `);
 
       if (error) throw error;
-      return data;
+      return data as OpportunityWithCompany[];
     },
     enabled: profile?.role === "student",
   });
