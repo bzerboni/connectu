@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Building, GraduationCap, School, Upload } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,15 +15,22 @@ const Profile = () => {
   const { session } = useAuth();
   const { toast } = useToast();
   const userId = session?.user.id;
+  const [formData, setFormData] = useState({
+    full_name: '',
+    university: '',
+    career: '',
+    graduation_year: '',
+    bio: '',
+  });
 
-  const { data: profile, refetch: refetchProfile } = useQuery({
+  const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
     queryKey: ['student_profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('student_profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -31,13 +38,17 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const [formData, setFormData] = useState({
-    full_name: profile?.full_name || '',
-    university: profile?.university || '',
-    career: profile?.career || '',
-    graduation_year: profile?.graduation_year || '',
-    bio: profile?.bio || '',
-  });
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || '',
+        university: profile.university || '',
+        career: profile.career || '',
+        graduation_year: profile.graduation_year || '',
+        bio: profile.bio || '',
+      });
+    }
+  }, [profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -117,7 +128,23 @@ const Profile = () => {
     }
   };
 
-  if (!profile) return <div>Cargando...</div>;
+  if (isLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-red-500">Error al cargar el perfil. Por favor intenta de nuevo.</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p>No se encontró el perfil. Por favor contacta a soporte.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
