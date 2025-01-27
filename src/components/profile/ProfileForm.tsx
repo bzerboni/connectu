@@ -63,6 +63,15 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               placeholder="Ej: 1-10 empleados, 11-50 empleados, etc."
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Biografía</label>
+            <Textarea
+              name="bio"
+              value={formData.bio}
+              onChange={onChange}
+              placeholder="Información adicional sobre la empresa"
+            />
+          </div>
         </>
       ) : (
         <>
@@ -105,15 +114,6 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
           </div>
         </>
       )}
-      <div>
-        <label className="block text-sm font-medium mb-1">Biografía</label>
-        <Textarea
-          name="bio"
-          value={formData.bio}
-          onChange={onChange}
-          placeholder="Cuéntanos sobre ti"
-        />
-      </div>
     </div>
   );
 };
