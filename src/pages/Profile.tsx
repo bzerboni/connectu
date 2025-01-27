@@ -45,6 +45,22 @@ const Profile = () => {
 
   const isCompany = userProfile?.role === 'company';
 
+  // Get student profile if user is a student
+  const { data: studentProfile } = useQuery({
+    queryKey: ['student_profile', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('student_profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && !isCompany,
+  });
+
   const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', userId, isCompany],
     queryFn: async () => {
@@ -117,16 +133,22 @@ const Profile = () => {
         .from('student_files')
         .getPublicUrl(filePath);
 
-      const updateData = fileType === 'cv' 
-        ? { cv_url: publicUrl }
-        : { avatar_url: publicUrl };
+      // Update the correct table based on file type and user role
+      if (fileType === 'cv' && !isCompany) {
+        const { error: updateError } = await supabase
+          .from('student_profiles')
+          .update({ cv_url: publicUrl })
+          .eq('id', userId);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', userId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      }
 
       toast({
         title: "Archivo subido exitosamente",
@@ -223,13 +245,13 @@ const Profile = () => {
                     <Button variant="outline" className="mt-2 cursor-pointer" asChild>
                       <span className="flex items-center gap-2">
                         <Upload size={16} />
-                        {profile.cv_url ? 'Actualizar CV' : 'Subir CV'}
+                        {studentProfile?.cv_url ? 'Actualizar CV' : 'Subir CV'}
                       </span>
                     </Button>
                   </label>
-                  {profile.cv_url && (
+                  {studentProfile?.cv_url && (
                     <a
-                      href={profile.cv_url}
+                      href={studentProfile.cv_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-2 text-sm text-blue-600 hover:underline"
