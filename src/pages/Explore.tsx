@@ -11,12 +11,13 @@ import { GraduationCap, Building2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
-type Profile = Tables<"profiles">;
+type CompanyProfile = Tables<"company_profiles">;
+type StudentProfile = Tables<"student_profiles">;
 type Opportunity = Tables<"opportunities">;
 type Application = Tables<"applications">;
 
 interface ApplicationWithProfile extends Application {
-  profiles: Profile;
+  student_profiles: StudentProfile;
   opportunities: Opportunity;
 }
 
@@ -28,14 +29,32 @@ const Explore = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
+      // First try to get company profile
+      const { data: companyData, error: companyError } = await supabase
+        .from("company_profiles")
         .select("*")
         .eq("id", session?.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      return data as Profile;
+      if (companyData) {
+        setUserRole("company");
+        return { ...companyData, role: "company" };
+      }
+
+      // If not found, try student profile
+      const { data: studentData, error: studentError } = await supabase
+        .from("student_profiles")
+        .select("*")
+        .eq("id", session?.user.id)
+        .maybeSingle();
+
+      if (studentData) {
+        setUserRole("student");
+        return { ...studentData, role: "student" };
+      }
+
+      if (companyError && studentError) throw companyError;
+      return null;
     },
     enabled: !!session?.user.id,
   });
@@ -44,12 +63,11 @@ const Explore = () => {
     queryKey: ["students"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("role", "student");
+        .from("student_profiles")
+        .select("*");
 
       if (error) throw error;
-      return data as Profile[];
+      return data as StudentProfile[];
     },
     enabled: profile?.role === "company",
   });
@@ -59,10 +77,10 @@ const Explore = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("opportunities")
-        .select("*, profiles(company_name)");
+        .select("*, company_profiles(company_name)");
 
       if (error) throw error;
-      return data as (Opportunity & { profiles: { company_name: string | null } })[];
+      return data as (Opportunity & { company_profiles: { company_name: string | null } })[];
     },
     enabled: profile?.role === "student",
   });
@@ -74,22 +92,16 @@ const Explore = () => {
         .from("applications")
         .select(`
           *,
-          profiles (*),
+          student_profiles (*),
           opportunities (*)
         `)
-        .eq("user_id", session?.user.id);
+        .eq("opportunity_id", profile?.id);
 
       if (error) throw error;
       return data as unknown as ApplicationWithProfile[];
     },
     enabled: !!session?.user.id && profile?.role === "company",
   });
-
-  useEffect(() => {
-    if (profile) {
-      setUserRole(profile.role);
-    }
-  }, [profile]);
 
   const handleContact = async (studentEmail: string) => {
     window.location.href = `mailto:${studentEmail}`;
@@ -100,7 +112,7 @@ const Explore = () => {
     });
   };
 
-  const renderStudentCard = (student: Profile) => (
+  const renderStudentCard = (student: StudentProfile) => (
     <Card key={student.id} className="hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4">
         <Avatar className="w-12 h-12">
@@ -121,7 +133,7 @@ const Explore = () => {
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Building2 size={16} />
-          <span>GPA: {student.gpa}</span>
+          <span>{student.graduation_year}</span>
         </div>
       </CardContent>
     </Card>
@@ -131,20 +143,20 @@ const Explore = () => {
     <Card key={application.id} className="hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4">
         <Avatar className="w-12 h-12">
-          <AvatarImage src={application.profiles.avatar_url || undefined} />
+          <AvatarImage src={application.student_profiles.avatar_url || undefined} />
           <AvatarFallback>
-            {application.profiles.full_name?.charAt(0) || "S"}
+            {application.student_profiles.full_name?.charAt(0) || "S"}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <CardTitle className="text-lg">{application.profiles.full_name}</CardTitle>
-          <p className="text-sm text-gray-600">{application.profiles.career}</p>
+          <CardTitle className="text-lg">{application.student_profiles.full_name}</CardTitle>
+          <p className="text-sm text-gray-600">{application.student_profiles.career}</p>
         </div>
         <Button 
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
-          onClick={() => handleContact(application.profiles.student_id || "")}
+          onClick={() => handleContact(application.student_profiles.student_id || "")}
         >
           <Mail size={16} />
           Contactar
@@ -158,11 +170,11 @@ const Explore = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <GraduationCap size={16} />
-            <span>{application.profiles.university}</span>
+            <span>{application.student_profiles.university}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Building2 size={16} />
-            <span>GPA: {application.profiles.gpa}</span>
+            <span>{application.student_profiles.graduation_year}</span>
           </div>
         </div>
       </CardContent>
@@ -197,7 +209,7 @@ const Explore = () => {
               key={opportunity.id}
               id={opportunity.id}
               title={opportunity.title}
-              company={opportunity.profiles.company_name || ""}
+              company={opportunity.company_profiles.company_name || ""}
               location={opportunity.location}
               type={opportunity.type}
               duration={opportunity.duration}
