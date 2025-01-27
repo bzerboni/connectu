@@ -22,15 +22,6 @@ type ProfileFormProps = {
 export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps) => {
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">Nombre Completo</label>
-        <Input
-          name="full_name"
-          value={formData.full_name}
-          onChange={onChange}
-          placeholder="Nombre Completo"
-        />
-      </div>
       {isCompany ? (
         <>
           <div>
@@ -72,6 +63,15 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
         </>
       ) : (
         <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nombre Completo</label>
+            <Input
+              name="full_name"
+              value={formData.full_name}
+              onChange={onChange}
+              placeholder="Nombre Completo"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Universidad</label>
             <Input
