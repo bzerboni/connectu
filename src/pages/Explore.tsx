@@ -17,7 +17,7 @@ type Opportunity = Tables<"opportunities">;
 type Application = Tables<"applications">;
 
 interface OpportunityWithCompany extends Opportunity {
-  company_profiles: {
+  profiles: {
     company_name: string | null;
   };
 }
@@ -73,7 +73,7 @@ const Explore = () => {
         .select("*");
 
       if (error) throw error;
-      return data as StudentProfile[];
+      return data;
     },
     enabled: profile?.role === "company",
   });
@@ -85,7 +85,7 @@ const Explore = () => {
         .from("opportunities")
         .select(`
           *,
-          company_profiles (
+          profiles (
             company_name
           )
         `);
@@ -109,7 +109,7 @@ const Explore = () => {
         .eq("opportunity_id", profile?.id);
 
       if (error) throw error;
-      return data as unknown as ApplicationWithProfile[];
+      return data as ApplicationWithProfile[];
     },
     enabled: !!session?.user.id && profile?.role === "company",
   });
@@ -220,7 +220,7 @@ const Explore = () => {
               key={opportunity.id}
               id={opportunity.id}
               title={opportunity.title}
-              company={opportunity.company_profiles.company_name || ""}
+              company={opportunity.profiles.company_name || ""}
               location={opportunity.location}
               type={opportunity.type}
               duration={opportunity.duration}
