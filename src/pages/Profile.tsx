@@ -132,6 +132,34 @@ const Profile = () => {
     }
   };
 
+  const handleCreateProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          ...formData,
+          role: isCompany ? 'company' : 'student'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Perfil creado",
+        description: "Tu perfil ha sido creado exitosamente.",
+      });
+
+      refetchProfile();
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el perfil. Por favor intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     try {
       const { error } = await supabase
@@ -159,18 +187,25 @@ const Profile = () => {
 
   if (isLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-red-500">Error al cargar el perfil. Por favor intenta de nuevo.</p>
-      </div>
-    );
-  }
-
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <p>No se encontró el perfil. Por favor contacta a soporte.</p>
+        <Card>
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold mb-4">Crear Perfil</h2>
+            <ProfileForm
+              formData={formData}
+              isCompany={isCompany}
+              onChange={handleInputChange}
+            />
+            <Button 
+              className="mt-4"
+              onClick={handleCreateProfile}
+            >
+              Crear Perfil
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -202,6 +237,17 @@ const Profile = () => {
                     handleSave();
                   } else {
                     setIsEditing(true);
+                    setFormData({
+                      full_name: profile.full_name || '',
+                      university: profile.university || '',
+                      career: profile.career || '',
+                      graduation_year: profile.graduation_year || '',
+                      bio: profile.bio || '',
+                      company_name: profile.company_name || '',
+                      company_description: profile.company_description || '',
+                      company_website: profile.company_website || '',
+                      company_size: profile.company_size || '',
+                    });
                   }
                 }}
               >
