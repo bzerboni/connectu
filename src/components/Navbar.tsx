@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "./AuthProvider";
@@ -27,7 +28,7 @@ const Navbar = () => {
     <nav className="border-b bg-white">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="text-2xl font-bold text-primary">
-          Conecta
+          ProyectCampus
         </Link>
         
         <div className="flex items-center gap-6">
