@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
@@ -27,7 +28,7 @@ const Profile = () => {
     company_size: '',
   });
 
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, isLoading: roleLoading } = useQuery({
     queryKey: ['user_role', userId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,16 +63,27 @@ const Profile = () => {
   const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      if (isCompany) {
+        const { data, error } = await supabase
+          .from('company_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        return data;
+      }
     },
-    enabled: !!userId,
+    enabled: !!userId && !roleLoading,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -110,7 +122,7 @@ const Profile = () => {
         if (updateError) throw updateError;
       } else {
         const { error: updateError } = await supabase
-          .from('profiles')
+          .from(isCompany ? 'company_profiles' : 'profiles')
           .update({ avatar_url: publicUrl })
           .eq('id', userId);
 
@@ -134,15 +146,29 @@ const Profile = () => {
 
   const handleCreateProfile = async () => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: userId,
-          ...formData,
-          role: isCompany ? 'company' : 'student'
-        });
+      if (isCompany) {
+        const { error } = await supabase
+          .from('company_profiles')
+          .upsert({
+            id: userId,
+            company_name: formData.company_name,
+            company_description: formData.company_description,
+            company_website: formData.company_website,
+            company_size: formData.company_size,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            ...formData,
+            role: 'student'
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Perfil creado",
@@ -162,12 +188,26 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(formData)
-        .eq('id', userId);
+      if (isCompany) {
+        const { error } = await supabase
+          .from('company_profiles')
+          .update({
+            company_name: formData.company_name,
+            company_description: formData.company_description,
+            company_website: formData.company_website,
+            company_size: formData.company_size,
+          })
+          .eq('id', userId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .update(formData)
+          .eq('id', userId);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "Perfil actualizado",
