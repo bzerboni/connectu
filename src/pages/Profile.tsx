@@ -11,6 +11,30 @@ import { CVUpload } from "@/components/profile/CVUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 
+type CompanyProfile = {
+  id: string;
+  avatar_url: string | null;
+  company_name: string | null;
+  company_description: string | null;
+  company_website: string | null;
+  company_size: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type StudentProfile = {
+  id: string;
+  full_name: string | null;
+  university: string | null;
+  career: string | null;
+  graduation_year: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+  role: string;
+};
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { session } = useAuth();
@@ -71,7 +95,7 @@ const Profile = () => {
           .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as CompanyProfile;
       } else {
         const { data, error } = await supabase
           .from('profiles')
@@ -80,7 +104,7 @@ const Profile = () => {
           .maybeSingle();
 
         if (error) throw error;
-        return data;
+        return data as StudentProfile;
       }
     },
     enabled: !!userId && !roleLoading,
@@ -163,7 +187,11 @@ const Profile = () => {
           .from('profiles')
           .upsert({
             id: userId,
-            ...formData,
+            full_name: formData.full_name,
+            university: formData.university,
+            career: formData.career,
+            graduation_year: formData.graduation_year,
+            bio: formData.bio,
             role: 'student'
           });
 
@@ -264,7 +292,7 @@ const Profile = () => {
             <div className="flex flex-col items-center">
               <AvatarUpload
                 avatarUrl={profile.avatar_url}
-                fullName={isCompany ? profile.company_name : profile.full_name}
+                fullName={isCompany ? (profile as CompanyProfile).company_name : (profile as StudentProfile).full_name}
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
               
@@ -284,21 +312,23 @@ const Profile = () => {
                   } else {
                     setIsEditing(true);
                     if (isCompany) {
+                      const companyProfile = profile as CompanyProfile;
                       setFormData({
                         ...formData,
-                        company_name: profile.company_name || '',
-                        company_description: profile.company_description || '',
-                        company_website: profile.company_website || '',
-                        company_size: profile.company_size || '',
+                        company_name: companyProfile.company_name || '',
+                        company_description: companyProfile.company_description || '',
+                        company_website: companyProfile.company_website || '',
+                        company_size: companyProfile.company_size || '',
                       });
                     } else {
+                      const studentProfile = profile as StudentProfile;
                       setFormData({
                         ...formData,
-                        full_name: profile.full_name || '',
-                        university: profile.university || '',
-                        career: profile.career || '',
-                        graduation_year: profile.graduation_year || '',
-                        bio: profile.bio || '',
+                        full_name: studentProfile.full_name || '',
+                        university: studentProfile.university || '',
+                        career: studentProfile.career || '',
+                        graduation_year: studentProfile.graduation_year || '',
+                        bio: studentProfile.bio || '',
                       });
                     }
                   }
