@@ -25,14 +25,17 @@ type CompanyProfile = {
 type StudentProfile = {
   id: string;
   full_name: string | null;
+  avatar_url: string | null;
+  cv_url: string | null;
   university: string | null;
   career: string | null;
+  student_id: string | null;
   graduation_year: string | null;
+  major: string | null;
+  gpa: string | null;
   bio: string | null;
-  avatar_url: string | null;
   created_at: string;
   updated_at: string;
-  role: string;
 };
 
 const Profile = () => {
@@ -44,7 +47,10 @@ const Profile = () => {
     full_name: '',
     university: '',
     career: '',
+    student_id: '',
     graduation_year: '',
+    major: '',
+    gpa: '',
     bio: '',
     company_name: '',
     company_description: '',
@@ -98,7 +104,7 @@ const Profile = () => {
         return data as CompanyProfile;
       } else {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('student_profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle();
@@ -184,15 +190,17 @@ const Profile = () => {
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('profiles')
+          .from('student_profiles')
           .upsert({
             id: userId,
             full_name: formData.full_name,
             university: formData.university,
             career: formData.career,
+            student_id: formData.student_id,
             graduation_year: formData.graduation_year,
+            major: formData.major,
+            gpa: formData.gpa,
             bio: formData.bio,
-            role: 'student'
           });
 
         if (error) throw error;
@@ -230,12 +238,15 @@ const Profile = () => {
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('profiles')
+          .from('student_profiles')
           .update({
             full_name: formData.full_name,
             university: formData.university,
             career: formData.career,
+            student_id: formData.student_id,
             graduation_year: formData.graduation_year,
+            major: formData.major,
+            gpa: formData.gpa,
             bio: formData.bio,
           })
           .eq('id', userId);
@@ -296,9 +307,9 @@ const Profile = () => {
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
               
-              {!isCompany && (
+              {!isCompany && studentProfile && (
                 <CVUpload
-                  cvUrl={studentProfile?.cv_url}
+                  cvUrl={studentProfile.cv_url}
                   onFileUpload={(e) => handleFileUpload(e, 'cv')}
                 />
               )}
@@ -327,7 +338,10 @@ const Profile = () => {
                         full_name: studentProfile.full_name || '',
                         university: studentProfile.university || '',
                         career: studentProfile.career || '',
+                        student_id: studentProfile.student_id || '',
                         graduation_year: studentProfile.graduation_year || '',
+                        major: studentProfile.major || '',
+                        gpa: studentProfile.gpa || '',
                         bio: studentProfile.bio || '',
                       });
                     }

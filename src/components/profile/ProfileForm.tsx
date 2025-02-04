@@ -4,26 +4,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
-type ProfileFormData = {
+type StudentProfileFormData = {
+  full_name: string;
+  university: string;
+  career: string;
+  student_id: string;
+  graduation_year: string;
+  major: string;
+  gpa: string;
+  bio: string;
+};
+
+type CompanyProfileFormData = {
   company_name: string;
   company_description: string;
   company_website: string;
   company_size: string;
-  full_name: string;
-  university: string;
-  career: string;
-  graduation_year: string;
-  bio: string;
 };
 
 type ProfileFormProps = {
-  formData: ProfileFormData;
+  formData: StudentProfileFormData | CompanyProfileFormData;
   isCompany: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 };
 
 export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps) => {
   if (isCompany) {
+    const companyData = formData as CompanyProfileFormData;
     return (
       <div className="space-y-6">
         <Card>
@@ -36,7 +43,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
                 <Input
                   id="company_name"
                   name="company_name"
-                  value={formData.company_name || ''}
+                  value={companyData.company_name || ''}
                   onChange={onChange}
                   placeholder="Ej: Mi Empresa S.A."
                   required
@@ -48,7 +55,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
                 <Textarea
                   id="company_description"
                   name="company_description"
-                  value={formData.company_description || ''}
+                  value={companyData.company_description || ''}
                   onChange={onChange}
                   placeholder="Describe tu empresa, su misión y valores"
                   required
@@ -60,7 +67,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
                 <Input
                   id="company_website"
                   name="company_website"
-                  value={formData.company_website || ''}
+                  value={companyData.company_website || ''}
                   onChange={onChange}
                   placeholder="https://ejemplo.com"
                   type="url"
@@ -72,7 +79,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
                 <Input
                   id="company_size"
                   name="company_size"
-                  value={formData.company_size || ''}
+                  value={companyData.company_size || ''}
                   onChange={onChange}
                   placeholder="Ej: 1-10 empleados, 11-50 empleados, etc."
                 />
@@ -84,6 +91,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
     );
   }
 
+  const studentData = formData as StudentProfileFormData;
   return (
     <div className="space-y-6">
       <Card>
@@ -96,10 +104,21 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="full_name"
                 name="full_name"
-                value={formData.full_name || ''}
+                value={studentData.full_name || ''}
                 onChange={onChange}
                 placeholder="Ej: Juan Pérez"
                 required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="student_id">Matrícula</Label>
+              <Input
+                id="student_id"
+                name="student_id"
+                value={studentData.student_id || ''}
+                onChange={onChange}
+                placeholder="Ej: A01234567"
               />
             </div>
 
@@ -108,7 +127,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="university"
                 name="university"
-                value={formData.university || ''}
+                value={studentData.university || ''}
                 onChange={onChange}
                 placeholder="Ej: Universidad Nacional"
                 required
@@ -120,10 +139,21 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="career"
                 name="career"
-                value={formData.career || ''}
+                value={studentData.career || ''}
                 onChange={onChange}
                 placeholder="Ej: Ingeniería Informática"
                 required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="major">Especialidad</Label>
+              <Input
+                id="major"
+                name="major"
+                value={studentData.major || ''}
+                onChange={onChange}
+                placeholder="Ej: Desarrollo de Software"
               />
             </div>
 
@@ -132,9 +162,20 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="graduation_year"
                 name="graduation_year"
-                value={formData.graduation_year || ''}
+                value={studentData.graduation_year || ''}
                 onChange={onChange}
                 placeholder="Ej: 2025"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="gpa">Promedio</Label>
+              <Input
+                id="gpa"
+                name="gpa"
+                value={studentData.gpa || ''}
+                onChange={onChange}
+                placeholder="Ej: 9.5"
               />
             </div>
 
@@ -143,7 +184,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Textarea
                 id="bio"
                 name="bio"
-                value={formData.bio || ''}
+                value={studentData.bio || ''}
                 onChange={onChange}
                 placeholder="Cuéntanos un poco sobre ti..."
               />
