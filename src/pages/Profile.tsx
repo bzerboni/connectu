@@ -203,7 +203,13 @@ const Profile = () => {
       } else {
         const { error } = await supabase
           .from('profiles')
-          .update(formData)
+          .update({
+            full_name: formData.full_name,
+            university: formData.university,
+            career: formData.career,
+            graduation_year: formData.graduation_year,
+            bio: formData.bio,
+          })
           .eq('id', userId);
 
         if (error) throw error;
@@ -258,7 +264,7 @@ const Profile = () => {
             <div className="flex flex-col items-center">
               <AvatarUpload
                 avatarUrl={profile.avatar_url}
-                fullName={profile.full_name}
+                fullName={isCompany ? profile.company_name : profile.full_name}
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
               
@@ -277,17 +283,24 @@ const Profile = () => {
                     handleSave();
                   } else {
                     setIsEditing(true);
-                    setFormData({
-                      full_name: profile.full_name || '',
-                      university: profile.university || '',
-                      career: profile.career || '',
-                      graduation_year: profile.graduation_year || '',
-                      bio: profile.bio || '',
-                      company_name: profile.company_name || '',
-                      company_description: profile.company_description || '',
-                      company_website: profile.company_website || '',
-                      company_size: profile.company_size || '',
-                    });
+                    if (isCompany) {
+                      setFormData({
+                        ...formData,
+                        company_name: profile.company_name || '',
+                        company_description: profile.company_description || '',
+                        company_website: profile.company_website || '',
+                        company_size: profile.company_size || '',
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        full_name: profile.full_name || '',
+                        university: profile.university || '',
+                        career: profile.career || '',
+                        graduation_year: profile.graduation_year || '',
+                        bio: profile.bio || '',
+                      });
+                    }
                   }
                 }}
               >
