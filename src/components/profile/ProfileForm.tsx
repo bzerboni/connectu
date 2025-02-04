@@ -8,7 +8,6 @@ type StudentProfileFormData = {
   full_name: string;
   university: string;
   career: string;
-  student_id: string;
   graduation_year: string;
   major: string;
   gpa: string;
@@ -108,17 +107,6 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
                 onChange={onChange}
                 placeholder="Ej: Juan Pérez"
                 required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="student_id">Matrícula</Label>
-              <Input
-                id="student_id"
-                name="student_id"
-                value={studentData.student_id || ''}
-                onChange={onChange}
-                placeholder="Ej: A01234567"
               />
             </div>
 
