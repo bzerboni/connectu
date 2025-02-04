@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -8,12 +9,6 @@ type ProfileFormData = {
   company_description: string;
   company_website: string;
   company_size: string;
-  title?: string;
-  description?: string;
-  location?: string;
-  type?: string;
-  duration?: string;
-  salary?: string;
 };
 
 type ProfileFormProps = {
@@ -37,7 +32,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="company_name"
                 name="company_name"
-                value={formData.company_name}
+                value={formData.company_name || ''}
                 onChange={onChange}
                 placeholder="Ej: Mi Empresa S.A."
                 required
@@ -49,7 +44,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Textarea
                 id="company_description"
                 name="company_description"
-                value={formData.company_description}
+                value={formData.company_description || ''}
                 onChange={onChange}
                 placeholder="Describe tu empresa, su misión y valores"
                 required
@@ -61,7 +56,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="company_website"
                 name="company_website"
-                value={formData.company_website}
+                value={formData.company_website || ''}
                 onChange={onChange}
                 placeholder="https://ejemplo.com"
                 type="url"
@@ -73,7 +68,7 @@ export const ProfileForm = ({ formData, isCompany, onChange }: ProfileFormProps)
               <Input
                 id="company_size"
                 name="company_size"
-                value={formData.company_size}
+                value={formData.company_size || ''}
                 onChange={onChange}
                 placeholder="Ej: 1-10 empleados, 11-50 empleados, etc."
               />

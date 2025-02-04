@@ -1,3 +1,4 @@
+
 import { Building, Globe, Users, FileText, Link, MapPin, Clock, DollarSign } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,7 @@ type ProfileViewProps = {
 
 export const ProfileView = ({ isCompany, profile }: ProfileViewProps) => {
   const { data: opportunities } = useQuery({
-    queryKey: ['company_opportunities', profile.company_name],
+    queryKey: ['company_opportunities', profile.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('opportunities')
@@ -27,7 +28,7 @@ export const ProfileView = ({ isCompany, profile }: ProfileViewProps) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!isCompany,
+    enabled: !!isCompany && !!profile.id,
   });
 
   if (!isCompany) return null;
