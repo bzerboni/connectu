@@ -13,10 +13,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface ApplicationsDashboardProps {
   onOpenChat: (userId: string) => void;
@@ -24,6 +25,7 @@ interface ApplicationsDashboardProps {
 
 export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps) => {
   const { session } = useAuth();
+  const navigate = useNavigate();
 
   const { data: metrics } = useQuery({
     queryKey: ["applications-metrics", session?.user.id],
@@ -61,7 +63,6 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
 
       if (applicationsError) throw applicationsError;
 
-      // Agrupamos las aplicaciones por oportunidad
       const applicationsByOpportunity = opportunities.map(opportunity => {
         const opportunityApplications = applications.filter(
           app => app.opportunities.id === opportunity.id
@@ -91,6 +92,10 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
       default:
         return "bg-yellow-500";
     }
+  };
+
+  const handleViewProfile = (studentId: string) => {
+    navigate(`/students/${studentId}`);
   };
 
   return (
@@ -165,13 +170,22 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
                         })}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onOpenChat(application.student_profiles?.id || "")}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onOpenChat(application.student_profiles?.id || "")}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewProfile(application.student_profiles?.id || "")}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
