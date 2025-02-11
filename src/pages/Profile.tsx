@@ -130,20 +130,20 @@ const Profile = () => {
     }
     const file = e.target.files[0];
     const fileExt = file.name.split('.').pop();
-    const filePath = `${userId}/${fileType}.${fileExt}`;
+    const fileName = `${userId}/${fileType}${fileExt ? `.${fileExt}` : ''}`;
 
     try {
       const { error: uploadError } = await supabase.storage
-        .from('student_files')
-        .upload(filePath, file, { upsert: true });
+        .from(fileType === 'cv' ? 'student_files' : 'avatars')
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('student_files')
-        .getPublicUrl(filePath);
+        .from(fileType === 'cv' ? 'student_files' : 'avatars')
+        .getPublicUrl(fileName);
 
-      if (fileType === 'cv' && !isCompany) {
+      if (fileType === 'cv') {
         const { error: updateError } = await supabase
           .from('student_profiles')
           .update({ cv_url: publicUrl })
@@ -152,7 +152,7 @@ const Profile = () => {
         if (updateError) throw updateError;
       } else {
         const { error: updateError } = await supabase
-          .from(isCompany ? 'company_profiles' : 'profiles')
+          .from(isCompany ? 'company_profiles' : 'student_profiles')
           .update({ avatar_url: publicUrl })
           .eq('id', userId);
 
@@ -161,7 +161,7 @@ const Profile = () => {
 
       toast({
         title: "Archivo subido exitosamente",
-        description: `Tu ${fileType === 'cv' ? 'CV' : 'foto'} ha sido actualizado.`,
+        description: `Tu ${fileType === 'cv' ? 'CV' : 'foto de perfil'} ha sido actualizado.`,
       });
 
       refetchProfile();
