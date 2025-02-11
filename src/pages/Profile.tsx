@@ -130,7 +130,7 @@ const Profile = () => {
     }
     const file = e.target.files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${fileType}${fileExt ? `.${fileExt}` : ''}`;
+    const fileName = `${userId}-${fileType}${fileExt ? `.${fileExt}` : ''}`;
 
     try {
       const { error: uploadError } = await supabase.storage
@@ -166,6 +166,7 @@ const Profile = () => {
 
       refetchProfile();
     } catch (error: any) {
+      console.error('Error uploading file:', error);
       toast({
         title: "Error",
         description: `No se pudo subir el archivo. ${error.message}`,
