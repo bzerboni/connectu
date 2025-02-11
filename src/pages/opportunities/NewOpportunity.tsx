@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +15,7 @@ const NewOpportunity = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { id } = useParams(); // Obtenemos el ID de la URL si estamos editando
+  const { id } = useParams();
   const isEditing = !!id;
 
   const [formData, setFormData] = useState({
@@ -28,9 +28,11 @@ const NewOpportunity = () => {
   });
 
   // Si estamos editando, cargamos los datos de la oportunidad
-  const { data: opportunity } = useQuery({
+  useQuery({
     queryKey: ['opportunity', id],
     queryFn: async () => {
+      if (!isEditing || !session?.user.id) return null;
+      
       const { data, error } = await supabase
         .from('opportunities')
         .select('*')
@@ -39,14 +41,13 @@ const NewOpportunity = () => {
         .single();
 
       if (error) throw error;
-      return data;
-    },
-    enabled: isEditing && !!session?.user.id,
-    onSuccess: (data) => {
+      
       if (data) {
         setFormData(data);
       }
+      return data;
     },
+    enabled: isEditing && !!session?.user.id,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
