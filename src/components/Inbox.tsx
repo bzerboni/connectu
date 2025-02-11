@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -32,6 +33,10 @@ interface Message {
   receiver_id: string;
   sender_info: Profile | null;
   receiver_info: Profile | null;
+  related_opportunity_id?: string | null;
+  opportunity?: {
+    title: string;
+  } | null;
 }
 
 interface InboxProps {
@@ -56,7 +61,11 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           content,
           created_at,
           sender_id,
-          receiver_id
+          receiver_id,
+          related_opportunity_id,
+          opportunity:opportunities(
+            title
+          )
         `)
         .or(`sender_id.eq.${session?.user.id},receiver_id.eq.${session?.user.id}`)
         .order("created_at", { ascending: false });
@@ -75,19 +84,55 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
 
       if (profilesError) throw profilesError;
 
+      // Luego obtenemos los mensajes de las aplicaciones
+      const { data: applications, error: applicationsError } = await supabase
+        .from("applications")
+        .select(`
+          id,
+          message,
+          created_at,
+          opportunity_id,
+          user_id,
+          status,
+          opportunities (
+            id,
+            title,
+            company_id
+          )
+        `)
+        .eq("opportunities.company_id", session?.user.id);
+
+      if (applicationsError) throw applicationsError;
+
+      // Convertimos las aplicaciones en mensajes
+      const applicationMessages = applications.map(app => ({
+        id: `app-${app.id}`,
+        content: app.message || "Ha aplicado a esta oportunidad",
+        created_at: app.created_at,
+        sender_id: app.user_id,
+        receiver_id: app.opportunities.company_id,
+        related_opportunity_id: app.opportunity_id,
+        opportunity: {
+          title: app.opportunities.title
+        }
+      }));
+
       // Creamos un mapa de perfiles para fácil acceso
       const profilesMap = new Map(
         profilesData.map(profile => [profile.id, profile])
       );
 
       // Combinamos los datos
-      const messagesWithProfiles = messagesData.map(message => ({
+      const allMessages = [...messagesData, ...applicationMessages].map(message => ({
         ...message,
         sender_info: profilesMap.get(message.sender_id) || null,
         receiver_info: profilesMap.get(message.receiver_id) || null,
       }));
 
-      return messagesWithProfiles as Message[];
+      // Ordenamos por fecha
+      return allMessages.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ) as Message[];
     },
     enabled: !!session?.user.id,
   });
@@ -131,6 +176,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
               const isFromMe = message.sender_id === session?.user.id;
               const otherPerson = isFromMe ? message.receiver_info : message.sender_info;
               const displayName = otherPerson?.company_name || otherPerson?.full_name || "Usuario";
+              const isApplication = message.id.toString().startsWith('app-');
               
               return (
                 <div
@@ -153,6 +199,11 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                         })}
                       </span>
                     </div>
+                    {message.opportunity && (
+                      <div className="text-xs text-primary mb-1">
+                        Aplicación para: {message.opportunity.title}
+                      </div>
+                    )}
                     <div
                       className={`mt-1 px-4 py-2 rounded-lg ${
                         isFromMe
@@ -162,7 +213,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                     >
                       {message.content}
                     </div>
-                    {!isFromMe && (
+                    {!isFromMe && !isApplication && (
                       <Button
                         variant="ghost"
                         size="sm"
