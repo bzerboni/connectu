@@ -40,10 +40,40 @@ export const PortfolioUpload = () => {
     enabled: !!userId,
   });
 
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) return <Image className="h-5 w-5" />;
-    if (fileType.startsWith('video/')) return <Video className="h-5 w-5" />;
-    return <File className="h-5 w-5" />;
+  const getFilePreview = (item: PortfolioItem) => {
+    if (item.file_type.startsWith('image/')) {
+      return (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
+          <img
+            src={item.file_url}
+            alt={item.file_name}
+            className="object-cover w-full h-full"
+          />
+        </div>
+      );
+    }
+    
+    if (item.file_type.startsWith('video/')) {
+      return (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
+          <video
+            src={item.file_url}
+            controls
+            className="w-full h-full"
+          />
+        </div>
+      );
+    }
+
+    // Para documentos, mostramos un icono más elaborado
+    return (
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-gray-500">
+          <File className="h-12 w-12" />
+          <span className="text-sm font-medium">{item.file_name.split('.').pop()?.toUpperCase()}</span>
+        </div>
+      </div>
+    );
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,37 +180,35 @@ export const PortfolioUpload = () => {
       </Card>
 
       {portfolioItems && portfolioItems.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {portfolioItems.map((item) => (
-            <Card key={item.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {getFileIcon(item.file_type)}
-                    <div>
-                      <a
-                        href={item.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium hover:underline"
-                      >
-                        {item.file_name}
-                      </a>
-                      {item.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+            <Card key={item.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative">
+                  {getFilePreview(item)}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-destructive hover:text-destructive/90"
+                    className="absolute top-2 right-2 text-destructive hover:text-destructive/90 bg-white/90 hover:bg-white shadow-sm"
                     onClick={() => handleDelete(item.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                </div>
+                <div className="p-4">
+                  <a
+                    href={item.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline block"
+                  >
+                    {item.file_name}
+                  </a>
+                  {item.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
