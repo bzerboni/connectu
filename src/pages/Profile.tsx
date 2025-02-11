@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +11,7 @@ import { CVUpload } from "@/components/profile/CVUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { useNavigate } from "react-router-dom";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import OpportunityCard from "@/components/OpportunityCard";
 
 type CompanyProfile = {
   id: string;
@@ -98,7 +97,7 @@ const Profile = () => {
     enabled: !!userId && !isCompanyLoading,
   });
 
-  const { data: opportunities } = useQuery({
+  const { data: opportunities, refetch: refetchOpportunities } = useQuery({
     queryKey: ['company_opportunities', userId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -268,41 +267,6 @@ const Profile = () => {
     }
   };
 
-  const handleCreateOpportunity = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert([{
-          title: formData.get('title') as string,
-          description: formData.get('description') as string,
-          location: formData.get('location') as string,
-          type: formData.get('type') as string,
-          duration: formData.get('duration') as string,
-          salary: formData.get('salary') as string,
-          company_id: userId as string
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Oportunidad creada",
-        description: "La oportunidad laboral ha sido creada exitosamente.",
-      });
-
-      form.reset();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   if (isLoading || isCompanyLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
   if (!profile) {
@@ -423,109 +387,31 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      {isCompany && (
-        <>
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-bold mb-4">Crear Nueva Oportunidad Laboral</h2>
-              <form onSubmit={handleCreateOpportunity} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Título</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder="Ej: Desarrollador Frontend Senior"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Descripción</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    placeholder="Describe la posición, responsabilidades y requisitos"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="location">Ubicación</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    placeholder="Ej: Ciudad de México"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="type">Tipo de Trabajo</Label>
-                  <Input
-                    id="type"
-                    name="type"
-                    placeholder="Ej: Tiempo completo, Medio tiempo, Por proyecto"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="duration">Duración</Label>
-                  <Input
-                    id="duration"
-                    name="duration"
-                    placeholder="Ej: 6 meses, Indefinido"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="salary">Salario</Label>
-                  <Input
-                    id="salary"
-                    name="salary"
-                    placeholder="Ej: $30,000 - $40,000 MXN mensual"
-                    required
-                  />
-                </div>
-
-                <Button type="submit">
-                  Crear Oportunidad
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {opportunities && opportunities.length > 0 && (
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Oportunidades Publicadas</h2>
-                <div className="space-y-4">
-                  {opportunities.map((opportunity) => (
-                    <div key={opportunity.id} className="border p-4 rounded-lg">
-                      <h3 className="text-xl font-semibold">{opportunity.title}</h3>
-                      <p className="text-gray-600">{opportunity.description}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {opportunity.location}
-                        </span>
-                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {opportunity.type}
-                        </span>
-                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {opportunity.duration}
-                        </span>
-                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                          {opportunity.salary}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
+      {isCompany && opportunities && opportunities.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Mis Oportunidades Laborales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {opportunities.map((opportunity) => (
+                <OpportunityCard
+                  key={opportunity.id}
+                  id={opportunity.id}
+                  title={opportunity.title}
+                  company={(profile as CompanyProfile).company_name || ""}
+                  location={opportunity.location}
+                  type={opportunity.type}
+                  duration={opportunity.duration}
+                  salary={opportunity.salary}
+                  description={opportunity.description}
+                  isCompanyView={true}
+                  onDelete={() => refetchOpportunities()}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
