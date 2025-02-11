@@ -4,13 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Building2, FileText, Calculator, MessageSquare } from "lucide-react";
+import { GraduationCap, Building2, FileText, Calculator, MessageSquare, File, Image, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+
+type PortfolioItem = {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_type: string;
+  description: string;
+  created_at: string;
+};
 
 const StudentProfile = () => {
   const { id } = useParams();
@@ -34,6 +43,56 @@ const StudentProfile = () => {
     },
     enabled: !!id,
   });
+
+  const { data: portfolioItems } = useQuery({
+    queryKey: ["portfolio", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("student_portfolio")
+        .select("*")
+        .eq("student_id", id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as PortfolioItem[];
+    },
+    enabled: !!id,
+  });
+
+  const getFilePreview = (item: PortfolioItem) => {
+    if (item.file_type.startsWith('image/')) {
+      return (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
+          <img
+            src={item.file_url}
+            alt={item.file_name}
+            className="object-cover w-full h-full"
+          />
+        </div>
+      );
+    }
+    
+    if (item.file_type.startsWith('video/')) {
+      return (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
+          <video
+            src={item.file_url}
+            controls
+            className="w-full h-full"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2 text-gray-500">
+          <File className="h-12 w-12" />
+          <span className="text-sm font-medium">{item.file_name.split('.').pop()?.toUpperCase()}</span>
+        </div>
+      </div>
+    );
+  };
 
   const handleContact = async () => {
     if (!session) {
@@ -69,7 +128,7 @@ const StudentProfile = () => {
   if (!student) return <div>No se encontró el estudiante</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 space-y-8">
       <Card>
         <CardHeader className="flex flex-row items-start gap-4">
           <Avatar className="w-20 h-20">
@@ -132,6 +191,42 @@ const StudentProfile = () => {
           )}
         </CardContent>
       </Card>
+
+      {portfolioItems && portfolioItems.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Portafolio</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {portfolioItems.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="relative">
+                      {getFilePreview(item)}
+                    </div>
+                    <div className="p-4">
+                      <a
+                        href={item.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium hover:underline block"
+                      >
+                        {item.file_name}
+                      </a>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={isContactDialogOpen} onOpenChange={setIsContactDialogOpen}>
         <DialogContent>
