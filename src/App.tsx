@@ -12,6 +12,7 @@ import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import StudentProfile from "./pages/students/[id]";
+import NewOpportunity from "./pages/opportunities/NewOpportunity";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <StudentProfile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/opportunities/new" 
+                element={
+                  <ProtectedRoute>
+                    <NewOpportunity />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/opportunities/edit/:id" 
+                element={
+                  <ProtectedRoute>
+                    <NewOpportunity />
                   </ProtectedRoute>
                 } 
               />
