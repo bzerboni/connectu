@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const NewOpportunity = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { id } = useParams(); // Obtenemos el ID de la URL si estamos editando
+  const isEditing = !!id;
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,6 +25,28 @@ const NewOpportunity = () => {
     type: '',
     duration: '',
     salary: '',
+  });
+
+  // Si estamos editando, cargamos los datos de la oportunidad
+  const { data: opportunity } = useQuery({
+    queryKey: ['opportunity', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('id', id)
+        .eq('company_id', session?.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isEditing && !!session?.user.id,
+    onSuccess: (data) => {
+      if (data) {
+        setFormData(data);
+      }
+    },
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -35,21 +61,41 @@ const NewOpportunity = () => {
     e.preventDefault();
     
     try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert({
-          ...formData,
-          company_id: session?.user.id,
+      if (isEditing) {
+        // Si estamos editando, actualizamos la oportunidad existente
+        const { error } = await supabase
+          .from('opportunities')
+          .update({
+            ...formData,
+            company_id: session?.user.id,
+          })
+          .eq('id', id)
+          .eq('company_id', session?.user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Oportunidad actualizada",
+          description: "La oportunidad laboral ha sido actualizada exitosamente.",
         });
+      } else {
+        // Si es nueva, la creamos
+        const { error } = await supabase
+          .from('opportunities')
+          .insert({
+            ...formData,
+            company_id: session?.user.id,
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Oportunidad creada",
-        description: "La oportunidad laboral ha sido creada exitosamente.",
-      });
+        toast({
+          title: "Oportunidad creada",
+          description: "La oportunidad laboral ha sido creada exitosamente.",
+        });
+      }
 
-      navigate('/explore');
+      navigate('/profile');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -63,7 +109,7 @@ const NewOpportunity = () => {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>Crear Nueva Oportunidad Laboral</CardTitle>
+          <CardTitle>{isEditing ? 'Editar Oportunidad Laboral' : 'Crear Nueva Oportunidad Laboral'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,12 +189,12 @@ const NewOpportunity = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/profile')}
               >
                 Cancelar
               </Button>
               <Button type="submit">
-                Crear Oportunidad
+                {isEditing ? 'Guardar Cambios' : 'Crear Oportunidad'}
               </Button>
             </div>
           </form>
