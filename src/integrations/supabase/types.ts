@@ -90,8 +90,10 @@ export type Database = {
       messages: {
         Row: {
           content: string
+          conversation_id: string | null
           created_at: string
           id: string
+          is_read: boolean | null
           read: boolean | null
           receiver_id: string
           related_opportunity_id: string | null
@@ -100,8 +102,10 @@ export type Database = {
         }
         Insert: {
           content: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
+          is_read?: boolean | null
           read?: boolean | null
           receiver_id: string
           related_opportunity_id?: string | null
@@ -110,8 +114,10 @@ export type Database = {
         }
         Update: {
           content?: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
+          is_read?: boolean | null
           read?: boolean | null
           receiver_id?: string
           related_opportunity_id?: string | null
