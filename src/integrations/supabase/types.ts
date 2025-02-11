@@ -184,7 +184,7 @@ export type Database = {
             foreignKeyName: "opportunities_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "company_profiles"
             referencedColumns: ["id"]
           },
         ]
