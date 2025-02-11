@@ -10,6 +10,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { CVUpload } from "@/components/profile/CVUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { useNavigate } from "react-router-dom";
 
 type CompanyProfile = {
   id: string;
@@ -42,6 +43,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { session } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const userId = session?.user.id;
   const [formData, setFormData] = useState({
     full_name: '',
@@ -74,21 +76,6 @@ const Profile = () => {
   });
 
   const isCompany = userProfile?.role === 'company';
-
-  const { data: studentProfile } = useQuery({
-    queryKey: ['student_profile', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('student_profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId && !isCompany,
-  });
 
   const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', userId],
@@ -271,14 +258,16 @@ const Profile = () => {
     }
   };
 
-  if (isLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
+  if (isLoading || roleLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Crear Perfil</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              {isCompany ? "Crear Perfil de Empresa" : "Crear Perfil de Estudiante"}
+            </h2>
             <ProfileForm
               formData={formData}
               isCompany={isCompany}
@@ -308,9 +297,9 @@ const Profile = () => {
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
               
-              {!isCompany && studentProfile && (
+              {!isCompany && (
                 <CVUpload
-                  cvUrl={studentProfile.cv_url}
+                  cvUrl={(profile as StudentProfile).cv_url}
                   onFileUpload={(e) => handleFileUpload(e, 'cv')}
                 />
               )}
@@ -358,6 +347,15 @@ const Profile = () => {
                   onClick={() => setIsEditing(false)}
                 >
                   Cancelar
+                </Button>
+              )}
+
+              {isCompany && profile && (
+                <Button
+                  className="mt-4"
+                  onClick={() => navigate('/opportunities/new')}
+                >
+                  Crear Oportunidad Laboral
                 </Button>
               )}
             </div>
