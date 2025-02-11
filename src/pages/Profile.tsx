@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
@@ -12,6 +11,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { useNavigate } from "react-router-dom";
 import OpportunityCard from "@/components/OpportunityCard";
+import { PortfolioUpload } from "@/components/profile/PortfolioUpload";
 
 type CompanyProfile = {
   id: string;
@@ -386,6 +386,10 @@ const Profile = () => {
           </div>
         </CardContent>
       </Card>
+
+      {!isCompany && profile && (
+        <PortfolioUpload />
+      )}
 
       {isCompany && opportunities && opportunities.length > 0 && (
         <Card>
