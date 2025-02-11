@@ -57,12 +57,12 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           created_at,
           sender_id,
           receiver_id,
-          sender_profile:sender_id(
+          sender_profile:profiles!sender_id(
             full_name,
             avatar_url,
             company_name
           ),
-          receiver_profile:receiver_id(
+          receiver_profile:profiles!receiver_id(
             full_name,
             avatar_url,
             company_name
