@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, DollarSign, ChevronDown, ChevronUp, Edit } from "lucide-react";
+import { MapPin, Clock, DollarSign, ChevronDown, ChevronUp, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +22,7 @@ interface OpportunityCardProps {
   salary: string;
   description: string;
   isCompanyView?: boolean;
+  onDelete?: () => void;
 }
 
 const OpportunityCard = ({ 
@@ -33,10 +34,12 @@ const OpportunityCard = ({
   duration, 
   salary,
   description,
-  isCompanyView = false
+  isCompanyView = false,
+  onDelete
 }: OpportunityCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [message, setMessage] = useState("");
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -78,7 +81,33 @@ const OpportunityCard = ({
   };
 
   const handleEdit = () => {
-    navigate(`/opportunities/${id}/edit`);
+    navigate(`/opportunities/edit/${id}`);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("opportunities")
+        .delete()
+        .eq("id", id)
+        .eq("company_id", session?.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Oportunidad eliminada",
+        description: "La oportunidad ha sido eliminada exitosamente.",
+      });
+
+      setIsDeleteDialogOpen(false);
+      if (onDelete) onDelete();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -91,13 +120,23 @@ const OpportunityCard = ({
               <p className="text-sm text-gray-600">{company}</p>
             </div>
             {isCompanyView && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleEdit}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleEdit}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-destructive hover:text-destructive/90"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -167,6 +206,25 @@ const OpportunityCard = ({
             </Button>
             <Button onClick={handleSubmitApplication}>
               Enviar aplicación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Oportunidad</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>¿Estás seguro de que quieres eliminar esta oportunidad? Esta acción no se puede deshacer.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Eliminar
             </Button>
           </DialogFooter>
         </DialogContent>
