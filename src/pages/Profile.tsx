@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
@@ -101,6 +100,21 @@ const Profile = () => {
       }
     },
     enabled: !!userId && !roleLoading,
+  });
+
+  const { data: opportunities } = useQuery({
+    queryKey: ['company_opportunities', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('company_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && isCompany,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -258,6 +272,41 @@ const Profile = () => {
     }
   };
 
+  const handleCreateOpportunity = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const { error } = await supabase
+        .from('opportunities')
+        .insert({
+          company_id: userId,
+          title: formData.get('title'),
+          description: formData.get('description'),
+          location: formData.get('location'),
+          type: formData.get('type'),
+          duration: formData.get('duration'),
+          salary: formData.get('salary'),
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Oportunidad creada",
+        description: "La oportunidad laboral ha sido creada exitosamente.",
+      });
+
+      form.reset();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading || roleLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
   if (!profile) {
@@ -377,6 +426,111 @@ const Profile = () => {
           </div>
         </CardContent>
       </Card>
+
+      {isCompany && (
+        <>
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold mb-4">Crear Nueva Oportunidad Laboral</h2>
+              <form onSubmit={handleCreateOpportunity} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Título</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    placeholder="Ej: Desarrollador Frontend Senior"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Descripción</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe la posición, responsabilidades y requisitos"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="location">Ubicación</Label>
+                  <Input
+                    id="location"
+                    name="location"
+                    placeholder="Ej: Ciudad de México"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="type">Tipo de Trabajo</Label>
+                  <Input
+                    id="type"
+                    name="type"
+                    placeholder="Ej: Tiempo completo, Medio tiempo, Por proyecto"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="duration">Duración</Label>
+                  <Input
+                    id="duration"
+                    name="duration"
+                    placeholder="Ej: 6 meses, Indefinido"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="salary">Salario</Label>
+                  <Input
+                    id="salary"
+                    name="salary"
+                    placeholder="Ej: $30,000 - $40,000 MXN mensual"
+                    required
+                  />
+                </div>
+
+                <Button type="submit">
+                  Crear Oportunidad
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {opportunities && opportunities.length > 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Oportunidades Publicadas</h2>
+                <div className="space-y-4">
+                  {opportunities.map((opportunity) => (
+                    <div key={opportunity.id} className="border p-4 rounded-lg">
+                      <h3 className="text-xl font-semibold">{opportunity.title}</h3>
+                      <p className="text-gray-600">{opportunity.description}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          {opportunity.location}
+                        </span>
+                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          {opportunity.type}
+                        </span>
+                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          {opportunity.duration}
+                        </span>
+                        <span className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          {opportunity.salary}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 };
