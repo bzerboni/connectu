@@ -49,7 +49,7 @@ export type Database = {
             foreignKeyName: "applications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "student_profiles"
             referencedColumns: ["id"]
           },
         ]
