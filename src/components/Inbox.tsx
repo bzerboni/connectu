@@ -21,12 +21,14 @@ interface Message {
   id: string;
   content: string;
   created_at: string;
-  sender: {
+  sender_id: string;
+  receiver_id: string;
+  sender_profile: {
     full_name: string | null;
     avatar_url: string | null;
     company_name: string | null;
   };
-  receiver: {
+  receiver_profile: {
     full_name: string | null;
     avatar_url: string | null;
     company_name: string | null;
@@ -50,13 +52,17 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
       const { data, error } = await supabase
         .from("messages")
         .select(`
-          *,
-          sender:sender_id(
+          id,
+          content,
+          created_at,
+          sender_id,
+          receiver_id,
+          sender_profile:sender_id(
             full_name,
             avatar_url,
             company_name
           ),
-          receiver:receiver_id(
+          receiver_profile:receiver_id(
             full_name,
             avatar_url,
             company_name
@@ -108,7 +114,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           <div className="space-y-4 p-4">
             {messages?.map((message) => {
               const isFromMe = message.sender_id === session?.user.id;
-              const otherPerson = isFromMe ? message.receiver : message.sender;
+              const otherPerson = isFromMe ? message.receiver_profile : message.sender_profile;
               const displayName = otherPerson.company_name || otherPerson.full_name || "Usuario";
               
               return (
