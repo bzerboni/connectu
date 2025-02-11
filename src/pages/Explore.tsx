@@ -7,9 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GraduationCap, Building2, Mail } from "lucide-react";
+import { GraduationCap, Building2, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import Inbox from "@/components/Inbox";
 
 type CompanyProfile = Tables<"company_profiles">;
 type StudentProfile = Tables<"student_profiles">;
@@ -38,11 +39,11 @@ const Explore = () => {
   const { session } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const { toast } = useToast();
+  const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user.id],
     queryFn: async () => {
-      // First try to get company profile
       const { data: companyData, error: companyError } = await supabase
         .from("company_profiles")
         .select("*")
@@ -54,7 +55,6 @@ const Explore = () => {
         return { ...companyData, role: "company" };
       }
 
-      // If not found, try student profile
       const { data: studentData, error: studentError } = await supabase
         .from("student_profiles")
         .select("*")
@@ -128,13 +128,27 @@ const Explore = () => {
     enabled: !!session?.user.id && profile?.role === "company",
   });
 
-  const handleContact = async (studentEmail: string) => {
-    window.location.href = `mailto:${studentEmail}`;
-    
-    toast({
-      title: "Contacto iniciado",
-      description: "Se ha abierto tu cliente de correo para contactar al estudiante.",
-    });
+  const handleContact = async (studentId: string) => {
+    try {
+      const { error } = await supabase.from("messages").insert({
+        sender_id: session?.user.id,
+        receiver_id: studentId,
+        content: "¡Hola! Me gustaría contactarte respecto a tu perfil.",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Mensaje enviado",
+        description: "Se ha enviado un mensaje inicial al estudiante.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const renderStudentCard = (student: StudentProfile) => (
@@ -208,9 +222,19 @@ const Explore = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">
-        {userRole === "company" ? "Explorar Estudiantes" : "Explorar Oportunidades"}
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">
+          {userRole === "company" ? "Explorar Estudiantes" : "Explorar Oportunidades"}
+        </h1>
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative"
+          onClick={() => setIsInboxOpen(true)}
+        >
+          <MessageSquare className="h-5 w-5" />
+        </Button>
+      </div>
       
       <div className="mb-8">
         <SearchBar />
@@ -244,6 +268,8 @@ const Explore = () => {
           ))
         )}
       </div>
+
+      <Inbox isOpen={isInboxOpen} onClose={() => setIsInboxOpen(false)} />
     </div>
   );
 };
