@@ -98,6 +98,21 @@ const Profile = () => {
     enabled: !!userId && !isCompanyLoading,
   });
 
+  const { data: opportunities } = useQuery({
+    queryKey: ['company_opportunities', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('company_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && isCompany,
+  });
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
