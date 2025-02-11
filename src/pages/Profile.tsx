@@ -62,12 +62,12 @@ const Profile = () => {
     company_size: '',
   });
 
-  const { data: userProfile, isLoading: roleLoading } = useQuery({
-    queryKey: ['user_role', userId],
+  const { data: companyProfile, isLoading: isCompanyLoading } = useQuery({
+    queryKey: ['company_profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
+        .from('company_profiles')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
 
@@ -77,20 +77,13 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const isCompany = userProfile?.role === 'company';
+  const isCompany = !!companyProfile;
 
   const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', userId],
+    queryKey: ['profile', userId, isCompany],
     queryFn: async () => {
       if (isCompany) {
-        const { data, error } = await supabase
-          .from('company_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (error) throw error;
-        return data as CompanyProfile;
+        return companyProfile;
       } else {
         const { data, error } = await supabase
           .from('student_profiles')
@@ -102,22 +95,7 @@ const Profile = () => {
         return data as StudentProfile;
       }
     },
-    enabled: !!userId && !roleLoading,
-  });
-
-  const { data: opportunities } = useQuery({
-    queryKey: ['company_opportunities', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('opportunities')
-        .select('*')
-        .eq('company_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId && isCompany,
+    enabled: !!userId && !isCompanyLoading,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -283,7 +261,7 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('opportunities')
-        .insert([{  // Wrap the object in an array para que coincida con el tipo esperado
+        .insert([{
           title: formData.get('title') as string,
           description: formData.get('description') as string,
           location: formData.get('location') as string,
@@ -310,7 +288,7 @@ const Profile = () => {
     }
   };
 
-  if (isLoading || roleLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
+  if (isLoading || isCompanyLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
   if (!profile) {
     return (
