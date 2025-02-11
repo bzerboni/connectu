@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -20,7 +21,7 @@ type Application = Tables<"applications">;
 interface OpportunityWithCompany extends Opportunity {
   profiles: {
     company_name: string | null;
-  };
+  } | null;
 }
 
 interface ApplicationWithProfile extends Application {
@@ -92,7 +93,7 @@ const Explore = () => {
         .from("opportunities")
         .select(`
           *,
-          profiles (
+          profiles:company_profiles!opportunities_company_id_fkey (
             company_name
           )
         `);
@@ -258,7 +259,7 @@ const Explore = () => {
               key={opportunity.id}
               id={opportunity.id}
               title={opportunity.title}
-              company={opportunity.profiles.company_name || ""}
+              company={opportunity.profiles?.company_name || ""}
               location={opportunity.location}
               type={opportunity.type}
               duration={opportunity.duration}
@@ -275,3 +276,4 @@ const Explore = () => {
 };
 
 export default Explore;
+
