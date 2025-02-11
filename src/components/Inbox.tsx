@@ -17,22 +17,21 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/components/ui/use-toast";
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  company_name: string | null;
+}
+
 interface Message {
   id: string;
   content: string;
   created_at: string;
   sender_id: string;
   receiver_id: string;
-  sender_profile: {
-    full_name: string | null;
-    avatar_url: string | null;
-    company_name: string | null;
-  };
-  receiver_profile: {
-    full_name: string | null;
-    avatar_url: string | null;
-    company_name: string | null;
-  };
+  sender_info: Profile | null;
+  receiver_info: Profile | null;
 }
 
 interface InboxProps {
@@ -49,30 +48,46 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
   const { data: messages } = useQuery({
     queryKey: ["messages", session?.user.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Primero obtenemos los mensajes
+      const { data: messagesData, error: messagesError } = await supabase
         .from("messages")
         .select(`
           id,
           content,
           created_at,
           sender_id,
-          receiver_id,
-          sender_profile:profiles!sender_id(
-            full_name,
-            avatar_url,
-            company_name
-          ),
-          receiver_profile:profiles!receiver_id(
-            full_name,
-            avatar_url,
-            company_name
-          )
+          receiver_id
         `)
         .or(`sender_id.eq.${session?.user.id},receiver_id.eq.${session?.user.id}`)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Message[];
+      if (messagesError) throw messagesError;
+
+      // Luego obtenemos los perfiles de todos los usuarios involucrados
+      const userIds = new Set(
+        messagesData.flatMap(msg => [msg.sender_id, msg.receiver_id])
+      );
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, company_name")
+        .in("id", Array.from(userIds));
+
+      if (profilesError) throw profilesError;
+
+      // Creamos un mapa de perfiles para fácil acceso
+      const profilesMap = new Map(
+        profilesData.map(profile => [profile.id, profile])
+      );
+
+      // Combinamos los datos
+      const messagesWithProfiles = messagesData.map(message => ({
+        ...message,
+        sender_info: profilesMap.get(message.sender_id) || null,
+        receiver_info: profilesMap.get(message.receiver_id) || null,
+      }));
+
+      return messagesWithProfiles as Message[];
     },
     enabled: !!session?.user.id,
   });
@@ -114,8 +129,8 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           <div className="space-y-4 p-4">
             {messages?.map((message) => {
               const isFromMe = message.sender_id === session?.user.id;
-              const otherPerson = isFromMe ? message.receiver_profile : message.sender_profile;
-              const displayName = otherPerson.company_name || otherPerson.full_name || "Usuario";
+              const otherPerson = isFromMe ? message.receiver_info : message.sender_info;
+              const displayName = otherPerson?.company_name || otherPerson?.full_name || "Usuario";
               
               return (
                 <div
@@ -123,7 +138,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                   className={`flex gap-3 ${isFromMe ? "flex-row-reverse" : ""}`}
                 >
                   <Avatar className="w-8 h-8">
-                    <AvatarImage src={otherPerson.avatar_url || undefined} />
+                    <AvatarImage src={otherPerson?.avatar_url || undefined} />
                     <AvatarFallback>
                       {displayName.charAt(0)}
                     </AvatarFallback>
