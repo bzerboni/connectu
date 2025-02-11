@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, Clock, DollarSign, ChevronDown, ChevronUp, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -77,12 +77,29 @@ const OpportunityCard = ({
     }
   };
 
+  const handleEdit = () => {
+    navigate(`/opportunities/${id}/edit`);
+  };
+
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader>
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <p className="text-sm text-gray-600">{company}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{title}</CardTitle>
+              <p className="text-sm text-gray-600">{company}</p>
+            </div>
+            {isCompanyView && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleEdit}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
