@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface OpportunityCardProps {
-  id: string; // Add id to props
+  id: string;
   title: string;
   company: string;
   location: string;
@@ -22,7 +25,7 @@ interface OpportunityCardProps {
 }
 
 const OpportunityCard = ({ 
-  id, // Add id to destructuring
+  id,
   title, 
   company, 
   location, 
@@ -33,6 +36,8 @@ const OpportunityCard = ({
   isCompanyView = false
 }: OpportunityCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [message, setMessage] = useState("");
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,10 +48,15 @@ const OpportunityCard = ({
       return;
     }
 
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmitApplication = async () => {
     try {
       const { error } = await supabase.from("applications").insert({
-        opportunity_id: id, // Use the actual UUID
-        user_id: session.user.id
+        opportunity_id: id,
+        user_id: session?.user.id,
+        message: message
       });
 
       if (error) throw error;
@@ -55,6 +65,9 @@ const OpportunityCard = ({
         title: "Aplicación exitosa",
         description: "Tu aplicación ha sido enviada correctamente.",
       });
+
+      setIsDialogOpen(false);
+      setMessage("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -65,56 +78,83 @@ const OpportunityCard = ({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <CardTitle className="text-lg">{title}</CardTitle>
-        <p className="text-sm text-gray-600">{company}</p>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <MapPin size={16} />
-          <span>{location}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <Clock size={16} />
-          <span>{duration}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <DollarSign size={16} />
-          <span>{salary}</span>
-        </div>
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            {type}
-          </Badge>
-        </div>
-        
-        <div className={cn(
-          "overflow-hidden transition-all duration-300",
-          isExpanded ? "max-h-96" : "max-h-0"
-        )}>
-          <p className="text-sm text-gray-700 mb-4">{description}</p>
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col gap-2">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-between"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "Ver menos" : "Ver más"}
-          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </Button>
-        {!isCompanyView && (
+    <>
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <p className="text-sm text-gray-600">{company}</p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <MapPin size={16} />
+            <span>{location}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <Clock size={16} />
+            <span>{duration}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+            <DollarSign size={16} />
+            <span>{salary}</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge variant="secondary" className="bg-primary/10 text-primary">
+              {type}
+            </Badge>
+          </div>
+          
+          <div className={cn(
+            "overflow-hidden transition-all duration-300",
+            isExpanded ? "max-h-96" : "max-h-0"
+          )}>
+            <p className="text-sm text-gray-700 mb-4">{description}</p>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
           <Button 
-            className="w-full"
-            onClick={handleApply}
+            variant="ghost" 
+            className="w-full justify-between"
+            onClick={() => setIsExpanded(!isExpanded)}
           >
-            {session ? "Aplicar ahora" : "Inicia sesión para aplicar"}
+            {isExpanded ? "Ver menos" : "Ver más"}
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </Button>
-        )}
-      </CardFooter>
-    </Card>
+          {!isCompanyView && (
+            <Button 
+              className="w-full"
+              onClick={handleApply}
+            >
+              {session ? "Aplicar ahora" : "Inicia sesión para aplicar"}
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aplicar a {title}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Escribe un mensaje para la empresa (opcional)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmitApplication}>
+              Enviar aplicación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
