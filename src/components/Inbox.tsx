@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./AuthProvider";
@@ -78,8 +79,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
             title
           )
         `)
-        .or(`sender_id.eq.${session?.user.id},receiver_id.eq.${session?.user.id}`)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
 
       if (messagesError) throw messagesError;
 
@@ -122,6 +122,10 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           const conversation = conversationsMap.get(message.conversation_id)!;
           if (!isFromMe && !message.is_read) {
             conversation.unreadCount += 1;
+          }
+          // Actualizar el último mensaje solo si es más reciente
+          if (new Date(message.created_at) > new Date(conversation.lastMessage.created_at)) {
+            conversation.lastMessage = message;
           }
         }
       });
@@ -183,8 +187,8 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px] h-full flex flex-col">
-        <SheetHeader>
+      <SheetContent className="w-[400px] sm:w-[540px] h-full flex flex-col p-0">
+        <SheetHeader className="p-6 pb-2">
           <SheetTitle>Mensajes</SheetTitle>
         </SheetHeader>
         
@@ -194,9 +198,9 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
             <TabsTrigger value="unread">No leídos</TabsTrigger>
           </TabsList>
 
-          <div className="flex flex-grow">
-            <div className="w-1/3 border-r">
-              <ScrollArea className="h-[calc(100vh-8rem)]">
+          <div className="flex flex-grow h-[calc(100vh-10rem)]">
+            <div className="w-1/3 border-r overflow-hidden">
+              <ScrollArea className="h-full">
                 {filteredConversations?.map((conversation) => (
                   <div
                     key={conversation.id}
@@ -212,15 +216,15 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                           {conversation.otherPerson.full_name?.[0] || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-grow">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">
+                      <div className="flex-grow min-w-0">
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="font-medium truncate">
                             {conversation.otherPerson.role === 'student' 
                               ? conversation.otherPerson.full_name 
                               : conversation.otherPerson.company_name}
                           </span>
                           {conversation.unreadCount > 0 && (
-                            <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                            <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full flex-shrink-0">
                               {conversation.unreadCount}
                             </span>
                           )}
@@ -235,8 +239,8 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
               </ScrollArea>
             </div>
 
-            <div className="flex-grow flex flex-col">
-              <ScrollArea className="flex-grow p-4">
+            <div className="flex-grow flex flex-col h-full">
+              <ScrollArea className="flex-grow px-6 py-4">
                 <div className="space-y-4">
                   {selectedMessages?.map((message) => {
                     const isFromMe = message.sender_id === session?.user.id;
@@ -245,7 +249,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                         key={message.id}
                         className={`flex gap-3 ${isFromMe ? "flex-row-reverse" : ""}`}
                       >
-                        <Avatar className="h-8 w-8">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
                           <AvatarImage
                             src={
                               isFromMe
@@ -259,7 +263,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                               : message.sender_info?.full_name?.[0]) || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className={`flex flex-col ${isFromMe ? "items-end" : ""}`}>
+                        <div className={`flex flex-col ${isFromMe ? "items-end" : ""} max-w-[70%]`}>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">
                               {isFromMe
@@ -281,7 +285,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                             </div>
                           )}
                           <div
-                            className={`mt-1 px-4 py-2 rounded-lg ${
+                            className={`mt-1 px-4 py-2 rounded-lg break-words ${
                               isFromMe
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-muted"
@@ -297,7 +301,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
               </ScrollArea>
 
               {selectedConversation && (
-                <div className="p-4 border-t">
+                <div className="p-4 border-t mt-auto">
                   <Textarea
                     placeholder="Escribe tu mensaje..."
                     value={replyContent}
