@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./AuthProvider";
@@ -23,6 +22,7 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   company_name: string | null;
+  role: string;
 }
 
 interface Message {
@@ -63,7 +63,6 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
   const { data: inboxData, refetch: refetchMessages } = useQuery({
     queryKey: ["messages", session?.user.id],
     queryFn: async () => {
-      // Obtener todos los mensajes
       const { data: messagesData, error: messagesError } = await supabase
         .from("messages")
         .select(`
@@ -84,31 +83,27 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
 
       if (messagesError) throw messagesError;
 
-      // Obtener los perfiles
       const userIds = new Set(
         messagesData.flatMap(msg => [msg.sender_id, msg.receiver_id])
       );
 
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, company_name")
+        .select("id, full_name, avatar_url, company_name, role")
         .in("id", Array.from(userIds));
 
       if (profilesError) throw profilesError;
 
-      // Crear un mapa de perfiles
       const profilesMap = new Map(
         profilesData.map(profile => [profile.id, profile])
       );
 
-      // Procesar los mensajes
       const messages = messagesData.map(message => ({
         ...message,
         sender_info: profilesMap.get(message.sender_id) || null,
         receiver_info: profilesMap.get(message.receiver_id) || null,
       })) as Message[];
 
-      // Agrupar mensajes por conversación
       const conversationsMap = new Map<string, Conversation>();
       
       messages.forEach(message => {
@@ -200,7 +195,6 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           </TabsList>
 
           <div className="flex flex-grow">
-            {/* Lista de conversaciones */}
             <div className="w-1/3 border-r">
               <ScrollArea className="h-[calc(100vh-8rem)]">
                 {filteredConversations?.map((conversation) => (
@@ -221,9 +215,9 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                       <div className="flex-grow">
                         <div className="flex justify-between items-center">
                           <span className="font-medium">
-                            {conversation.otherPerson.company_name || 
-                             conversation.otherPerson.full_name || 
-                             "Usuario"}
+                            {conversation.otherPerson.role === 'student' 
+                              ? conversation.otherPerson.full_name 
+                              : conversation.otherPerson.company_name}
                           </span>
                           {conversation.unreadCount > 0 && (
                             <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
@@ -241,7 +235,6 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
               </ScrollArea>
             </div>
 
-            {/* Mensajes de la conversación seleccionada */}
             <div className="flex-grow flex flex-col">
               <ScrollArea className="flex-grow p-4">
                 <div className="space-y-4">
@@ -271,9 +264,9 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                             <span className="text-sm font-medium">
                               {isFromMe
                                 ? "Tú"
-                                : message.sender_info?.company_name ||
-                                  message.sender_info?.full_name ||
-                                  "Usuario"}
+                                : message.sender_info?.role === 'student'
+                                  ? message.sender_info.full_name
+                                  : message.sender_info?.company_name}
                             </span>
                             <span className="text-xs text-gray-500">
                               {formatDistanceToNow(new Date(message.created_at), {
