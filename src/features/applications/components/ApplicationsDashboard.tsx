@@ -44,7 +44,7 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
           created_at,
           status,
           message,
-          profiles!applications_user_id_fkey (
+          student_profiles!applications_user_id_fkey (
             id,
             full_name,
             avatar_url,
@@ -137,16 +137,16 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
                       <TableCell className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={application.profiles?.avatar_url || undefined}
+                            src={application.student_profiles?.avatar_url || undefined}
                           />
                           <AvatarFallback>
-                            {application.profiles?.full_name?.[0] || "U"}
+                            {application.student_profiles?.full_name?.[0] || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <span>{application.profiles?.full_name}</span>
+                        <span>{application.student_profiles?.full_name}</span>
                       </TableCell>
-                      <TableCell>{application.profiles?.university}</TableCell>
-                      <TableCell>{application.profiles?.career}</TableCell>
+                      <TableCell>{application.student_profiles?.university}</TableCell>
+                      <TableCell>{application.student_profiles?.career}</TableCell>
                       <TableCell>
                         <Badge
                           className={getStatusColor(application.status)}
@@ -168,7 +168,7 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => onOpenChat(application.profiles?.id || "")}
+                          onClick={() => onOpenChat(application.student_profiles?.id || "")}
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
