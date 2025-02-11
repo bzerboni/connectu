@@ -9,7 +9,7 @@ import { MessageSquare } from "lucide-react";
 import Inbox from "@/components/Inbox";
 import { StudentExplorer } from "@/features/explore/components/StudentExplorer";
 import { OpportunityExplorer } from "@/features/explore/components/OpportunityExplorer";
-import { ApplicationsList } from "@/features/explore/components/ApplicationsList";
+import { ApplicationsDashboard } from "@/features/applications/components/ApplicationsDashboard";
 
 const Explore = () => {
   const { session } = useAuth();
@@ -78,36 +78,11 @@ const Explore = () => {
     enabled: profile?.role === "student",
   });
 
-  const { data: applications } = useQuery({
-    queryKey: ["applications", session?.user.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          *,
-          profiles (
-            full_name,
-            avatar_url,
-            career,
-            university,
-            graduation_year,
-            student_id
-          ),
-          opportunities (*)
-        `)
-        .eq("opportunity_id", profile?.id);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!session?.user.id && profile?.role === "company",
-  });
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">
-          {userRole === "company" ? "Explorar Estudiantes" : "Explorar Oportunidades"}
+          {userRole === "company" ? "Panel de Control" : "Explorar Oportunidades"}
         </h1>
         <Button
           variant="outline"
@@ -123,10 +98,13 @@ const Explore = () => {
         <SearchBar />
       </div>
 
-      {userRole === "company" && applications && <ApplicationsList applications={applications} />}
-
-      {userRole === "company" && students ? (
-        <StudentExplorer students={students} />
+      {userRole === "company" ? (
+        <div className="space-y-8">
+          <ApplicationsDashboard onOpenChat={(userId) => {
+            setIsInboxOpen(true);
+          }} />
+          <StudentExplorer students={students || []} />
+        </div>
       ) : opportunities ? (
         <OpportunityExplorer opportunities={opportunities} />
       ) : null}
