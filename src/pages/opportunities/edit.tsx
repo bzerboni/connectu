@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
 
 const EditOpportunity = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -30,6 +32,7 @@ const EditOpportunity = () => {
         .from("opportunities")
         .select("*")
         .eq("id", id)
+        .eq("company_id", session?.user.id)
         .single();
 
       if (error) throw error;
@@ -37,6 +40,7 @@ const EditOpportunity = () => {
       setFormData(data);
       return data;
     },
+    enabled: !!session?.user.id && !!id,
   });
 
   const handleInputChange = (
@@ -55,8 +59,12 @@ const EditOpportunity = () => {
     try {
       const { error } = await supabase
         .from("opportunities")
-        .update(formData)
-        .eq("id", id);
+        .update({
+          ...formData,
+          company_id: session?.user.id
+        })
+        .eq("id", id)
+        .eq("company_id", session?.user.id);
 
       if (error) throw error;
 
