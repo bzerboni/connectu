@@ -187,7 +187,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-[400px] sm:w-[540px] h-full flex flex-col p-0">
+      <SheetContent className="w-[90vw] max-w-[800px] h-full flex flex-col p-0">
         <SheetHeader className="p-6 pb-2">
           <SheetTitle>Mensajes</SheetTitle>
         </SheetHeader>
@@ -199,7 +199,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           </TabsList>
 
           <div className="flex flex-grow h-[calc(100vh-10rem)]">
-            <div className="w-1/3 border-r overflow-hidden">
+            <div className="w-1/4 border-r overflow-hidden">
               <ScrollArea className="h-full">
                 {filteredConversations?.map((conversation) => (
                   <div
@@ -240,6 +240,26 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
             </div>
 
             <div className="flex-grow flex flex-col h-full">
+              {selectedConversation && inboxData?.conversations && (
+                <div className="border-b p-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage 
+                        src={inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.avatar_url || undefined} 
+                      />
+                      <AvatarFallback>
+                        {inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.full_name?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-lg font-medium">
+                      {inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.role === 'student'
+                        ? inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.full_name
+                        : inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.company_name}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <ScrollArea className="flex-grow px-6 py-4">
                 <div className="space-y-4">
                   {selectedMessages?.map((message) => {
