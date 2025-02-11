@@ -10,6 +10,9 @@ import { CVUpload } from "@/components/profile/CVUpload";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { useNavigate } from "react-router-dom";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type CompanyProfile = {
   id: string;
@@ -280,15 +283,15 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from('opportunities')
-        .insert({
-          company_id: userId,
-          title: formData.get('title'),
-          description: formData.get('description'),
-          location: formData.get('location'),
-          type: formData.get('type'),
-          duration: formData.get('duration'),
-          salary: formData.get('salary'),
-        });
+        .insert([{  // Wrap the object in an array para que coincida con el tipo esperado
+          title: formData.get('title') as string,
+          description: formData.get('description') as string,
+          location: formData.get('location') as string,
+          type: formData.get('type') as string,
+          duration: formData.get('duration') as string,
+          salary: formData.get('salary') as string,
+          company_id: userId as string
+        }]);
 
       if (error) throw error;
 
@@ -341,7 +344,7 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex flex-col items-center">
               <AvatarUpload
-                avatarUrl={profile.avatar_url}
+                avatarUrl={profile?.avatar_url}
                 fullName={isCompany ? (profile as CompanyProfile).company_name : (profile as StudentProfile).full_name}
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
