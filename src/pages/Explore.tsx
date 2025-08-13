@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { MessageSquare } from "lucide-react";
 import Inbox from "@/components/Inbox";
-import { StudentExplorer } from "@/features/explore/components/StudentExplorer";
+import { AIBuilderExplorer } from "@/features/explore/components/AIBuilderExplorer";
 import { OpportunityExplorer } from "@/features/explore/components/OpportunityExplorer";
 import { ApplicationsDashboard } from "@/features/applications/components/ApplicationsDashboard";
 
@@ -93,7 +93,7 @@ const Explore = () => {
           <ApplicationsDashboard onOpenChat={(userId) => {
             setIsInboxOpen(true);
           }} />
-          <StudentExplorer students={aiBuilders || []} />
+          <AIBuilderExplorer aiBuilders={aiBuilders || []} />
         </div>
       ) : opportunities ? (
         <OpportunityExplorer opportunities={opportunities} />

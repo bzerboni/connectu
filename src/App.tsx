@@ -11,7 +11,7 @@ import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
-import StudentProfile from "./pages/students/[id]";
+import AIBuilderProfile from "./pages/ai-builders/[id]";
 import NewOpportunity from "./pages/opportunities/NewOpportunity";
 
 const queryClient = new QueryClient();
@@ -45,10 +45,10 @@ const App = () => (
                 } 
               />
               <Route 
-                path="/students/:id" 
+                path="/ai-builders/:id" 
                 element={
                   <ProtectedRoute>
-                    <StudentProfile />
+                    <AIBuilderProfile />
                   </ProtectedRoute>
                 } 
               />
