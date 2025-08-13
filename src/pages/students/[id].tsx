@@ -14,7 +14,7 @@ import { useState } from "react";
 
 type PortfolioItem = {
   id: string;
-  file_name: string;
+  title: string;
   file_url: string;
   file_type: string;
   description: string;
@@ -30,12 +30,13 @@ const StudentProfile = () => {
   const [message, setMessage] = useState("");
 
   const { data: student } = useQuery({
-    queryKey: ["student", id],
+    queryKey: ["ai_builder", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("student_profiles")
+        .from("profiles")
         .select("*")
         .eq("id", id)
+        .eq("user_type", "ai_builder")
         .maybeSingle();
 
       if (error) throw error;
@@ -48,13 +49,13 @@ const StudentProfile = () => {
     queryKey: ["portfolio", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("student_portfolio")
+        .from("portfolio")
         .select("*")
-        .eq("student_id", id)
+        .eq("ai_builder_id", id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as PortfolioItem[];
+      return data;
     },
     enabled: !!id,
   });
@@ -65,7 +66,7 @@ const StudentProfile = () => {
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
           <img
             src={item.file_url}
-            alt={item.file_name}
+            alt={item.title}
             className="object-cover w-full h-full"
           />
         </div>
@@ -88,7 +89,7 @@ const StudentProfile = () => {
       <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2 text-gray-500">
           <File className="h-12 w-12" />
-          <span className="text-sm font-medium">{item.file_name.split('.').pop()?.toUpperCase()}</span>
+          <span className="text-sm font-medium">{item.title}</span>
         </div>
       </div>
     );
@@ -100,12 +101,14 @@ const StudentProfile = () => {
       return;
     }
 
-    try {
-      const { error } = await supabase.from("messages").insert({
-        content: message,
-        sender_id: session.user.id,
-        receiver_id: id,
-      });
+      try {
+        const conversationId = `${session.user.id}-${id}`;
+        const { error } = await supabase.from("messages").insert({
+          content: message,
+          sender_id: session.user.id,
+          receiver_id: id,
+          conversation_id: conversationId,
+        });
 
       if (error) throw error;
 
@@ -138,7 +141,7 @@ const StudentProfile = () => {
           <div className="flex flex-1 justify-between items-start">
             <div>
               <CardTitle className="text-2xl">{student.full_name}</CardTitle>
-              <p className="text-gray-600">{student.career}</p>
+              <p className="text-gray-600">AI Builder</p>
             </div>
             <Button
               onClick={() => setIsContactDialogOpen(true)}
@@ -153,22 +156,22 @@ const StudentProfile = () => {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-gray-500" />
-              <span>{student.university}</span>
+              <span>Especialista en IA</span>
             </div>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-gray-500" />
-              <span>Graduación: {student.graduation_year}</span>
+              <span>{student.available ? 'Disponible' : 'Ocupado'}</span>
             </div>
-            {student.major && (
+            {student.location && (
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-gray-500" />
-                <span>Especialidad: {student.major}</span>
+                <span>Ubicación: {student.location}</span>
               </div>
             )}
-            {student.gpa && (
+            {student.hourly_rate && (
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-gray-500" />
-                <span>Promedio: {student.gpa}</span>
+                <span>Tarifa: ${student.hourly_rate}/hora</span>
               </div>
             )}
           </div>
@@ -180,11 +183,11 @@ const StudentProfile = () => {
             </div>
           )}
 
-          {student.cv_url && (
+          {student.website && (
             <div>
               <Button asChild>
-                <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
-                  Ver CV
+                <a href={student.website} target="_blank" rel="noopener noreferrer">
+                  Ver Sitio Web
                 </a>
               </Button>
             </div>
@@ -212,7 +215,7 @@ const StudentProfile = () => {
                         rel="noopener noreferrer"
                         className="font-medium hover:underline block"
                       >
-                        {item.file_name}
+                        {item.title}
                       </a>
                       {item.description && (
                         <p className="text-sm text-muted-foreground mt-1">

@@ -19,7 +19,9 @@ interface OpportunityCardProps {
   location: string;
   type: string;
   duration: string;
-  salary: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  salary?: string;
   description: string;
   isCompanyView?: boolean;
   onDelete?: () => void;
@@ -32,6 +34,8 @@ const OpportunityCard = ({
   location, 
   type, 
   duration, 
+  budgetMin,
+  budgetMax,
   salary,
   description,
   isCompanyView = false,
@@ -166,7 +170,9 @@ const OpportunityCard = ({
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
             <DollarSign size={16} />
-            <span>{salary}</span>
+            <span>{budgetMin && budgetMax 
+              ? `$${budgetMin} - $${budgetMax}` 
+              : salary || 'Por definir'}</span>
           </div>
           <div className="flex flex-wrap gap-2 mb-4">
             <Badge variant="secondary" className="bg-primary/10 text-primary">

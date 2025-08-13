@@ -46,13 +46,7 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
           created_at,
           status,
           message,
-          student_profiles!applications_user_id_fkey (
-            id,
-            full_name,
-            avatar_url,
-            university,
-            career
-          ),
+          ai_builder_id,
           opportunities!applications_opportunity_id_fkey (
             id,
             title
@@ -63,10 +57,25 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
 
       if (applicationsError) throw applicationsError;
 
+      // Get AI builder profiles for applications
+      const aiBuilderIds = [...new Set(applications.map(app => app.ai_builder_id))];
+      const { data: aiBuilders, error: aiBuildersError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", aiBuilderIds)
+        .eq("user_type", "ai_builder");
+
+      if (aiBuildersError) throw aiBuildersError;
+
+      const aiBuilderMap = new Map(aiBuilders.map(ab => [ab.id, ab]));
+
       const applicationsByOpportunity = opportunities.map(opportunity => {
         const opportunityApplications = applications.filter(
           app => app.opportunities.id === opportunity.id
-        );
+        ).map(app => ({
+          ...app,
+          ai_builder_profile: aiBuilderMap.get(app.ai_builder_id)
+        }));
 
         return {
           opportunity,
@@ -94,8 +103,8 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
     }
   };
 
-  const handleViewProfile = (studentId: string) => {
-    navigate(`/students/${studentId}`);
+  const handleViewProfile = (aiBuilderId: string) => {
+    navigate(`/ai-builders/${aiBuilderId}`);
   };
 
   return (
@@ -128,9 +137,9 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Candidato</TableHead>
-                    <TableHead>Universidad</TableHead>
-                    <TableHead>Carrera</TableHead>
+                    <TableHead>AI Builder</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Experiencia</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Acciones</TableHead>
@@ -142,16 +151,16 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
                       <TableCell className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={application.student_profiles?.avatar_url || undefined}
+                            src={application.ai_builder_profile?.avatar_url || undefined}
                           />
                           <AvatarFallback>
-                            {application.student_profiles?.full_name?.[0] || "U"}
+                            {application.ai_builder_profile?.full_name?.[0] || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <span>{application.student_profiles?.full_name}</span>
+                        <span>{application.ai_builder_profile?.full_name}</span>
                       </TableCell>
-                      <TableCell>{application.student_profiles?.university}</TableCell>
-                      <TableCell>{application.student_profiles?.career}</TableCell>
+                      <TableCell>AI Builder</TableCell>
+                      <TableCell>-</TableCell>
                       <TableCell>
                         <Badge
                           className={getStatusColor(application.status)}
@@ -174,14 +183,14 @@ export const ApplicationsDashboard = ({ onOpenChat }: ApplicationsDashboardProps
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onOpenChat(application.student_profiles?.id || "")}
+                            onClick={() => onOpenChat(application.ai_builder_profile?.id || "")}
                           >
                             <MessageSquare className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleViewProfile(application.student_profiles?.id || "")}
+                            onClick={() => handleViewProfile(application.ai_builder_profile?.id || "")}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

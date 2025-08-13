@@ -106,7 +106,9 @@ export const ProfileView = ({ isCompany, profile }: ProfileViewProps) => {
                     </div>
                     <div className="flex items-center gap-2">
                       <DollarSign size={16} />
-                      <span>{opportunity.salary}</span>
+                      <span>{opportunity.budget_min && opportunity.budget_max 
+                        ? `$${opportunity.budget_min} - $${opportunity.budget_max}` 
+                        : 'Por definir'}</span>
                     </div>
                   </div>
 

@@ -23,7 +23,7 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   company_name: string | null;
-  role: string;
+  user_type: string;
 }
 
 interface Message {
@@ -33,7 +33,6 @@ interface Message {
   sender_id: string;
   receiver_id: string;
   conversation_id: string;
-  is_read: boolean;
   sender_info: Profile | null;
   receiver_info: Profile | null;
   related_opportunity_id?: string | null;
@@ -72,12 +71,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
           created_at,
           sender_id,
           receiver_id,
-          conversation_id,
-          is_read,
-          related_opportunity_id,
-          opportunity:opportunities(
-            title
-          )
+          conversation_id
         `)
         .order("created_at", { ascending: true });
 
@@ -89,7 +83,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
 
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url, company_name, role")
+        .select("id, full_name, avatar_url, company_name, user_type")
         .in("id", Array.from(userIds));
 
       if (profilesError) throw profilesError;
@@ -116,13 +110,10 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
             id: message.conversation_id,
             otherPerson,
             lastMessage: message,
-            unreadCount: !isFromMe && !message.is_read ? 1 : 0
+            unreadCount: 0
           });
         } else if (otherPerson) {
           const conversation = conversationsMap.get(message.conversation_id)!;
-          if (!isFromMe && !message.is_read) {
-            conversation.unreadCount += 1;
-          }
           // Actualizar el último mensaje solo si es más reciente
           if (new Date(message.created_at) > new Date(conversation.lastMessage.created_at)) {
             conversation.lastMessage = message;
@@ -219,7 +210,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                       <div className="flex-grow min-w-0">
                         <div className="flex justify-between items-center gap-2">
                           <span className="font-medium truncate">
-                            {conversation.otherPerson.role === 'student' 
+                            {conversation.otherPerson.user_type === 'ai_builder' 
                               ? conversation.otherPerson.full_name 
                               : conversation.otherPerson.company_name}
                           </span>
@@ -252,7 +243,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-lg font-medium">
-                      {inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.role === 'student'
+                      {inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.user_type === 'ai_builder'
                         ? inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.full_name
                         : inboxData.conversations.find(c => c.id === selectedConversation)?.otherPerson.company_name}
                     </span>
@@ -288,7 +279,7 @@ const Inbox = ({ isOpen, onClose }: InboxProps) => {
                             <span className="text-sm font-medium">
                               {isFromMe
                                 ? "Tú"
-                                : message.sender_info?.role === 'student'
+                                : message.sender_info?.user_type === 'ai_builder'
                                   ? message.sender_info.full_name
                                   : message.sender_info?.company_name}
                             </span>

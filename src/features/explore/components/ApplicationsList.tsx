@@ -12,12 +12,10 @@ type Opportunity = Tables<"opportunities">;
 
 interface ApplicationWithProfile extends Application {
   profiles: {
+    id: string;
     full_name: string | null;
     avatar_url: string | null;
-    career: string | null;
-    university: string | null;
-    graduation_year: string | null;
-    student_id: string | null;
+    user_type: string;
   };
   opportunities: Opportunity;
 }
@@ -29,19 +27,21 @@ interface ApplicationsListProps {
 export const ApplicationsList = ({ applications }: ApplicationsListProps) => {
   const { toast } = useToast();
 
-  const handleContact = async (studentId: string) => {
+  const handleContact = async (aiBuilderId: string) => {
     try {
+      const conversationId = `${(await supabase.auth.getSession()).data.session?.user.id}-${aiBuilderId}`;
       const { error } = await supabase.from("messages").insert({
         sender_id: (await supabase.auth.getSession()).data.session?.user.id,
-        receiver_id: studentId,
+        receiver_id: aiBuilderId,
         content: "¡Hola! Me gustaría contactarte respecto a tu perfil.",
+        conversation_id: conversationId,
       });
 
       if (error) throw error;
 
       toast({
         title: "Mensaje enviado",
-        description: "Se ha enviado un mensaje inicial al estudiante.",
+        description: "Se ha enviado un mensaje inicial al AI Builder.",
       });
     } catch (error: any) {
       toast({
@@ -72,14 +72,14 @@ export const ApplicationsList = ({ applications }: ApplicationsListProps) => {
                   {application.profiles.full_name}
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  {application.profiles.career}
+                  AI Builder
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
-                onClick={() => handleContact(application.profiles.student_id || "")}
+                onClick={() => handleContact(application.profiles.id)}
               >
                 <Mail size={16} />
                 Contactar
@@ -95,11 +95,11 @@ export const ApplicationsList = ({ applications }: ApplicationsListProps) => {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <GraduationCap size={16} />
-                  <span>{application.profiles.university}</span>
+                  <span>Especialista en AI</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Building2 size={16} />
-                  <span>{application.profiles.graduation_year}</span>
+                  <span>Disponible</span>
                 </div>
               </div>
             </CardContent>

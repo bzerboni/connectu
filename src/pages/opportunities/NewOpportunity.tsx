@@ -24,7 +24,8 @@ const NewOpportunity = () => {
     location: '',
     type: '',
     duration: '',
-    salary: '',
+    budget_min: 0,
+    budget_max: 0,
   });
 
   // Si estamos editando, cargamos los datos de la oportunidad
@@ -43,7 +44,15 @@ const NewOpportunity = () => {
       if (error) throw error;
       
       if (data) {
-        setFormData(data);
+        setFormData({
+          title: data.title,
+          description: data.description,
+          location: data.location,
+          type: data.type,
+          duration: data.duration,
+          budget_min: data.budget_min || 0,
+          budget_max: data.budget_max || 0,
+        });
       }
       return data;
     },
@@ -174,16 +183,31 @@ const NewOpportunity = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="salary">Salario</Label>
-              <Input
-                id="salary"
-                name="salary"
-                value={formData.salary}
-                onChange={handleInputChange}
-                placeholder="Ej: $30,000 - $40,000 MXN mensual"
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="budget_min">Presupuesto Mínimo</Label>
+                <Input
+                  id="budget_min"
+                  name="budget_min"
+                  type="number"
+                  value={formData.budget_min}
+                  onChange={handleInputChange}
+                  placeholder="1000"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="budget_max">Presupuesto Máximo</Label>
+                <Input
+                  id="budget_max"
+                  name="budget_max"
+                  type="number"
+                  value={formData.budget_max}
+                  onChange={handleInputChange}
+                  placeholder="5000"
+                  required
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-4">

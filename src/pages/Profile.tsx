@@ -61,13 +61,13 @@ const Profile = () => {
     company_size: '',
   });
 
-  const { data: companyProfile, isLoading: isCompanyLoading } = useQuery({
-    queryKey: ['company_profile', userId],
+  const { data: userProfile, isLoading: isProfileLoading, refetch: refetchProfile } = useQuery({
+    queryKey: ['user_profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('company_profiles')
+        .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
@@ -76,26 +76,8 @@ const Profile = () => {
     enabled: !!userId,
   });
 
-  const isCompany = !!companyProfile;
-
-  const { data: profile, isLoading, error, refetch: refetchProfile } = useQuery({
-    queryKey: ['profile', userId, isCompany],
-    queryFn: async () => {
-      if (isCompany) {
-        return companyProfile;
-      } else {
-        const { data, error } = await supabase
-          .from('student_profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-
-        if (error) throw error;
-        return data as StudentProfile;
-      }
-    },
-    enabled: !!userId && !isCompanyLoading,
-  });
+  const isCompany = userProfile?.user_type === 'company';
+  const profile = userProfile;
 
   const { data: opportunities, refetch: refetchOpportunities } = useQuery({
     queryKey: ['company_opportunities', userId],
@@ -140,17 +122,12 @@ const Profile = () => {
         .getPublicUrl(fileName);
 
       if (fileType === 'cv') {
-        const { error: updateError } = await supabase
-          .from('student_profiles')
-          .update({ cv_url: publicUrl })
-          .eq('id', userId);
-
-        if (updateError) throw updateError;
+        // CV functionality removed for AI builders
       } else {
         const { error: updateError } = await supabase
-          .from(isCompany ? 'company_profiles' : 'student_profiles')
+          .from('profiles')
           .update({ avatar_url: publicUrl })
-          .eq('id', userId);
+          .eq('user_id', userId);
 
         if (updateError) throw updateError;
       }
@@ -173,42 +150,24 @@ const Profile = () => {
 
   const handleCreateProfile = async () => {
     try {
-      if (isCompany) {
-        const { error } = await supabase
-          .from('company_profiles')
-          .upsert({
-            id: userId,
-            company_name: formData.company_name,
-            company_description: formData.company_description,
-            company_website: formData.company_website,
-            company_size: formData.company_size,
-          });
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: userId,
+          user_type: isCompany ? 'company' : 'ai_builder',
+          company_name: isCompany ? formData.company_name : null,
+          full_name: !isCompany ? formData.full_name : null,
+          bio: formData.bio,
+          website: formData.company_website,
+        });
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('student_profiles')
-          .upsert({
-            id: userId,
-            full_name: formData.full_name,
-            university: formData.university,
-            career: formData.career,
-            student_id: formData.student_id,
-            graduation_year: formData.graduation_year,
-            major: formData.major,
-            gpa: formData.gpa,
-            bio: formData.bio,
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Perfil creado",
         description: "Tu perfil ha sido creado exitosamente.",
       });
 
-      refetchProfile();
       setIsEditing(false);
     } catch (error: any) {
       toast({
@@ -221,35 +180,17 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      if (isCompany) {
-        const { error } = await supabase
-          .from('company_profiles')
-          .update({
-            company_name: formData.company_name,
-            company_description: formData.company_description,
-            company_website: formData.company_website,
-            company_size: formData.company_size,
-          })
-          .eq('id', userId);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          company_name: isCompany ? formData.company_name : null,
+          full_name: !isCompany ? formData.full_name : null,
+          bio: formData.bio,
+          website: formData.company_website,
+        })
+        .eq('user_id', userId);
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('student_profiles')
-          .update({
-            full_name: formData.full_name,
-            university: formData.university,
-            career: formData.career,
-            student_id: formData.student_id,
-            graduation_year: formData.graduation_year,
-            major: formData.major,
-            gpa: formData.gpa,
-            bio: formData.bio,
-          })
-          .eq('id', userId);
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Perfil actualizado",
@@ -257,7 +198,6 @@ const Profile = () => {
       });
 
       setIsEditing(false);
-      refetchProfile();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -267,7 +207,7 @@ const Profile = () => {
     }
   };
 
-  if (isLoading || isCompanyLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
+  if (isProfileLoading) return <div className="container mx-auto px-4 py-8">Cargando...</div>;
 
   if (!profile) {
     return (
@@ -302,15 +242,12 @@ const Profile = () => {
             <div className="flex flex-col items-center">
               <AvatarUpload
                 avatarUrl={profile?.avatar_url}
-                fullName={isCompany ? (profile as CompanyProfile).company_name : (profile as StudentProfile).full_name}
+                fullName={isCompany ? profile?.company_name : profile?.full_name}
                 onFileUpload={(e) => handleFileUpload(e, 'avatar')}
               />
               
               {!isCompany && (
-                <CVUpload
-                  cvUrl={(profile as StudentProfile).cv_url}
-                  onFileUpload={(e) => handleFileUpload(e, 'cv')}
-                />
+                <PortfolioUpload />
               )}
               
               <Button 
@@ -321,29 +258,13 @@ const Profile = () => {
                     handleSave();
                   } else {
                     setIsEditing(true);
-                    if (isCompany) {
-                      const companyProfile = profile as CompanyProfile;
-                      setFormData({
-                        ...formData,
-                        company_name: companyProfile.company_name || '',
-                        company_description: companyProfile.company_description || '',
-                        company_website: companyProfile.company_website || '',
-                        company_size: companyProfile.company_size || '',
-                      });
-                    } else {
-                      const studentProfile = profile as StudentProfile;
-                      setFormData({
-                        ...formData,
-                        full_name: studentProfile.full_name || '',
-                        university: studentProfile.university || '',
-                        career: studentProfile.career || '',
-                        student_id: studentProfile.student_id || '',
-                        graduation_year: studentProfile.graduation_year || '',
-                        major: studentProfile.major || '',
-                        gpa: studentProfile.gpa || '',
-                        bio: studentProfile.bio || '',
-                      });
-                    }
+                    setFormData({
+                      ...formData,
+                      company_name: profile?.company_name || '',
+                      full_name: profile?.full_name || '',
+                      bio: profile?.bio || '',
+                      company_website: profile?.website || '',
+                    });
                   }
                 }}
               >
@@ -387,14 +308,10 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      {!isCompany && profile && (
-        <PortfolioUpload />
-      )}
-
       {isCompany && opportunities && opportunities.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Mis Oportunidades Laborales</CardTitle>
+            <CardTitle>Mis Oportunidades</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
@@ -403,11 +320,12 @@ const Profile = () => {
                   key={opportunity.id}
                   id={opportunity.id}
                   title={opportunity.title}
-                  company={(profile as CompanyProfile).company_name || ""}
+                  company={profile?.company_name || ""}
                   location={opportunity.location}
                   type={opportunity.type}
                   duration={opportunity.duration}
-                  salary={opportunity.salary}
+                  budgetMin={opportunity.budget_min}
+                  budgetMax={opportunity.budget_max}
                   description={opportunity.description}
                   isCompanyView={true}
                   onDelete={() => refetchOpportunities()}
