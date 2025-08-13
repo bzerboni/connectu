@@ -19,45 +19,35 @@ const Explore = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile", session?.user.id],
     queryFn: async () => {
-      const { data: companyData, error: companyError } = await supabase
-        .from("company_profiles")
+      const { data: profileData, error } = await supabase
+        .from("profiles")
         .select("*")
-        .eq("id", session?.user.id)
+        .eq("user_id", session?.user.id)
         .maybeSingle();
 
-      if (companyData) {
-        setUserRole("company");
-        return { ...companyData, role: "company" };
+      if (profileData) {
+        setUserRole(profileData.user_type);
+        return profileData;
       }
 
-      const { data: studentData, error: studentError } = await supabase
-        .from("student_profiles")
-        .select("*")
-        .eq("id", session?.user.id)
-        .maybeSingle();
-
-      if (studentData) {
-        setUserRole("student");
-        return { ...studentData, role: "student" };
-      }
-
-      if (companyError && studentError) throw companyError;
+      if (error) throw error;
       return null;
     },
     enabled: !!session?.user.id,
   });
 
-  const { data: students } = useQuery({
-    queryKey: ["students"],
+  const { data: aiBuilders } = useQuery({
+    queryKey: ["ai_builders"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("student_profiles")
-        .select("*");
+        .from("profiles")
+        .select("*")
+        .eq("user_type", "ai_builder");
 
       if (error) throw error;
       return data;
     },
-    enabled: profile?.role === "company",
+    enabled: profile?.user_type === "company",
   });
 
   const { data: opportunities } = useQuery({
@@ -67,7 +57,7 @@ const Explore = () => {
         .from("opportunities")
         .select(`
           *,
-          profiles:company_profiles!opportunities_company_id_fkey (
+          profiles (
             company_name
           )
         `);
@@ -75,14 +65,14 @@ const Explore = () => {
       if (error) throw error;
       return data;
     },
-    enabled: profile?.role === "student",
+    enabled: profile?.user_type === "ai_builder",
   });
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">
-          {userRole === "company" ? "Panel de Control" : "Explorar Oportunidades"}
+          {userRole === "company" ? "Panel de Control" : "Explorar Proyectos de IA"}
         </h1>
         <Button
           variant="outline"
@@ -103,7 +93,7 @@ const Explore = () => {
           <ApplicationsDashboard onOpenChat={(userId) => {
             setIsInboxOpen(true);
           }} />
-          <StudentExplorer students={students || []} />
+          <StudentExplorer students={aiBuilders || []} />
         </div>
       ) : opportunities ? (
         <OpportunityExplorer opportunities={opportunities} />

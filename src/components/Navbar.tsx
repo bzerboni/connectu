@@ -35,7 +35,7 @@ const Navbar = () => {
           {session ? (
             <>
               <Link to="/explore" className="text-gray-600 hover:text-primary">
-                Explorar
+                Explorar Proyectos
               </Link>
               <Link to="/profile" className="text-gray-600 hover:text-primary">
                 Perfil

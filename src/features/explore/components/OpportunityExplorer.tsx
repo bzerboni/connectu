@@ -26,7 +26,7 @@ export const OpportunityExplorer = ({ opportunities }: OpportunityExplorerProps)
           location={opportunity.location}
           type={opportunity.type}
           duration={opportunity.duration}
-          salary={opportunity.salary}
+          salary={opportunity.budget_min && opportunity.budget_max ? `$${opportunity.budget_min} - $${opportunity.budget_max}` : "A negociar"}
           description={opportunity.description}
           isCompanyView={false}
         />

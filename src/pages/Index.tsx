@@ -43,11 +43,11 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="animate-fade-in">
             <h1 className="text-7xl font-bold mb-8 bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent leading-tight">
-              ¡Construye el futuro con IA!
+              ¡Conecta AI Builders con Empresas!
             </h1>
             <p className="text-2xl text-gray-700 mb-12 max-w-3xl mx-auto font-medium">
-              Conecta con empresas que necesitan automatizaciones y agentes de IA. 
-              <span className="text-primary font-semibold"> Monetiza tus habilidades</span> como AI builder.
+              La plataforma donde <span className="text-primary font-semibold">AI Builders</span> encuentran proyectos de automatización 
+              y las <span className="text-secondary font-semibold">empresas</span> encuentran talento especializado en IA.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
@@ -56,7 +56,7 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
               >
                 <Bot size={24} />
-                ¡Únete como AI Builder! 
+                ¡Únete como AI Builder!
                 <ArrowRight size={24} />
               </Button>
               <Button 
@@ -65,7 +65,7 @@ const Index = () => {
                 className="gap-3 text-xl font-bold px-8 py-6 hover:scale-105 transition-all duration-300 border-2 border-primary/50 hover:bg-primary/10"
               >
                 <Zap size={24} />
-                Ver Demo
+                Explorar Proyectos
               </Button>
             </div>
           </div>

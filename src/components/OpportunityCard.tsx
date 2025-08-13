@@ -56,9 +56,20 @@ const OpportunityCard = ({
 
   const handleSubmitApplication = async () => {
     try {
+      // First get the AI builder profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", session?.user.id)
+        .single();
+
+      if (!profile) {
+        throw new Error("Perfil no encontrado. Completa tu perfil primero.");
+      }
+
       const { error } = await supabase.from("applications").insert({
         opportunity_id: id,
-        user_id: session?.user.id,
+        ai_builder_id: profile.id,
         message: message
       });
 
@@ -90,7 +101,11 @@ const OpportunityCard = ({
         .from("opportunities")
         .delete()
         .eq("id", id)
-        .eq("company_id", session?.user.id);
+        .eq("company_id", (await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", session?.user.id)
+          .single()).data?.id);
 
       if (error) throw error;
 

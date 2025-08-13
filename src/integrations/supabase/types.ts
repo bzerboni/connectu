@@ -14,7 +14,247 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          ai_builder_id: string
+          created_at: string
+          id: string
+          message: string
+          opportunity_id: string
+          proposed_rate: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_builder_id: string
+          created_at?: string
+          id?: string
+          message: string
+          opportunity_id: string
+          proposed_rate?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_builder_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          opportunity_id?: string
+          proposed_rate?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_ai_builder_id_fkey"
+            columns: ["ai_builder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunities: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          company_id: string
+          created_at: string
+          description: string
+          duration: string | null
+          id: string
+          location: string | null
+          skills_required: string[] | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          company_id: string
+          created_at?: string
+          description: string
+          duration?: string | null
+          id?: string
+          location?: string | null
+          skills_required?: string[] | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          company_id?: string
+          created_at?: string
+          description?: string
+          duration?: string | null
+          id?: string
+          location?: string | null
+          skills_required?: string[] | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio: {
+        Row: {
+          ai_builder_id: string
+          created_at: string
+          description: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          project_url: string | null
+          technologies: string[] | null
+          title: string
+        }
+        Insert: {
+          ai_builder_id: string
+          created_at?: string
+          description?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          project_url?: string | null
+          technologies?: string[] | null
+          title: string
+        }
+        Update: {
+          ai_builder_id?: string
+          created_at?: string
+          description?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          project_url?: string | null
+          technologies?: string[] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_ai_builder_id_fkey"
+            columns: ["ai_builder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          available: boolean | null
+          avatar_url: string | null
+          bio: string | null
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          hourly_rate: number | null
+          id: string
+          location: string | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+          user_type: string
+          website: string | null
+        }
+        Insert: {
+          available?: boolean | null
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string
+          location?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+          user_type: string
+          website?: string | null
+        }
+        Update: {
+          available?: boolean | null
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          hourly_rate?: number | null
+          id?: string
+          location?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -12,10 +12,12 @@ import { useQuery } from "@tanstack/react-query";
 
 type PortfolioItem = {
   id: string;
-  file_name: string;
+  title: string;
+  description: string;
   file_url: string;
   file_type: string;
-  description: string;
+  technologies: string[];
+  project_url: string;
   created_at: string;
 };
 
@@ -28,10 +30,19 @@ export const PortfolioUpload = () => {
   const { data: portfolioItems, refetch: refetchPortfolio } = useQuery({
     queryKey: ['portfolio', userId],
     queryFn: async () => {
+      // First get the AI builder profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      if (!profile) throw new Error("Perfil no encontrado");
+
       const { data, error } = await supabase
-        .from('student_portfolio')
+        .from('portfolio')
         .select('*')
-        .eq('student_id', userId)
+        .eq('ai_builder_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -46,7 +57,7 @@ export const PortfolioUpload = () => {
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100">
           <img
             src={item.file_url}
-            alt={item.file_name}
+            alt={item.title}
             className="object-cover w-full h-full"
           />
         </div>
@@ -70,7 +81,7 @@ export const PortfolioUpload = () => {
       <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-2 text-gray-500">
           <File className="h-12 w-12" />
-          <span className="text-sm font-medium">{item.file_name.split('.').pop()?.toUpperCase()}</span>
+          <span className="text-sm font-medium">{item.title.split('.').pop()?.toUpperCase()}</span>
         </div>
       </div>
     );
@@ -84,24 +95,35 @@ export const PortfolioUpload = () => {
     const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
 
     try {
+      // First get the AI builder profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      if (!profile) throw new Error("Perfil no encontrado");
+
       const { error: uploadError } = await supabase.storage
-        .from('student_files')
+        .from('ai_builder_files')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('student_files')
+        .from('ai_builder_files')
         .getPublicUrl(fileName);
 
       const { error: dbError } = await supabase
-        .from('student_portfolio')
+        .from('portfolio')
         .insert({
-          student_id: userId,
-          file_name: file.name,
+          ai_builder_id: profile.id,
+          title: file.name,
           file_url: publicUrl,
           file_type: file.type,
           description: description,
+          technologies: [],
+          project_url: null,
         });
 
       if (dbError) throw dbError;
@@ -125,7 +147,7 @@ export const PortfolioUpload = () => {
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('student_portfolio')
+        .from('portfolio')
         .delete()
         .eq('id', id);
 
@@ -202,7 +224,7 @@ export const PortfolioUpload = () => {
                     rel="noopener noreferrer"
                     className="font-medium hover:underline block"
                   >
-                    {item.file_name}
+                    {item.title}
                   </a>
                   {item.description && (
                     <p className="text-sm text-muted-foreground mt-1">
